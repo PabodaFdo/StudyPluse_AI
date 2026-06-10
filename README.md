@@ -1,5 +1,3 @@
----
-
 # 🎓 StudyPulse AI
 
 **StudyPulse AI** is an AI-powered student productivity and academic growth platform that helps students manage subjects, organize smart notes, upload learning materials, generate quizzes and flashcards, track focus sessions, monitor academic risk, and grow a virtual **Study Garden** through consistent learning.

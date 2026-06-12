@@ -1,26 +1,36 @@
 const express = require('express');
 const cors = require('cors');
 const healthRoutes = require('./routes/health.routes');
+const authRoutes = require('./routes/auth.routes');
+const subjectRoutes = require('./routes/subject.routes');
+const noteRoutes = require('./routes/note.routes');
+const focusRoutes = require('./routes/focus.routes');
+const academicRoutes = require('./routes/academic.routes');
+const gardenRoutes = require('./routes/garden.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+const { errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
 
-// --------------- Middleware ---------------
-app.use(cors());
+// Middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --------------- Routes ---------------
-app.use('/api', healthRoutes);
+// Routes
+app.use('/api/health', healthRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/subjects', subjectRoutes);
+app.use('/api/notes', noteRoutes);
+app.use('/api/focus-sessions', focusRoutes);
+app.use('/api/academic-records', academicRoutes);
+app.use('/api/study-garden', gardenRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
-// --------------- 404 Handler ---------------
-app.use((_req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
-
-// --------------- Error Handler ---------------
-app.use((err, _req, res, _next) => {
-  console.error(err.stack);
-  res.status(500).json({ success: false, message: 'Internal server error' });
-});
+// Error Handler
+app.use(errorHandler);
 
 module.exports = app;

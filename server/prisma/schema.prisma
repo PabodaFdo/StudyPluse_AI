@@ -1,0 +1,108 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id               Int                @id @default(autoincrement())
+  email            String             @unique
+  password         String
+  name             String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  subjects         Subject[]
+  notes            Note[]
+  focusSessions    FocusSession[]
+  academicRecords  AcademicRecord[]
+  studyGarden      StudyGarden?
+  growthActivities GrowthActivity[]
+  quests           StudyQuest[]
+}
+
+model Subject {
+  id              Int               @id @default(autoincrement())
+  name            String
+  userId          Int
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  notes           Note[]
+  focusSessions   FocusSession[]
+  academicRecords AcademicRecord[]
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   @db.Text
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId Int
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FocusSession {
+  id        Int      @id @default(autoincrement())
+  duration  Int      // in minutes
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId Int
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AcademicRecord {
+  id                   Int      @id @default(autoincrement())
+  grade                String
+  userId               Int
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId            Int
+  subject              Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  courseCode           String?
+  courseName           String?
+  credits              Int?
+  attendancePercentage Float?
+  assignmentAverage    Float?
+  quizAverage          Float?
+  studyHoursPerWeek    Float?
+  missedDeadlines      Int?
+  previousExamMark     Float?
+  examMark             Float?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model StudyGarden {
+  id        Int      @id @default(autoincrement())
+  level     Int      @default(1)
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GrowthActivity {
+  id        Int      @id @default(autoincrement())
+  activity  String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StudyQuest {
+  id        Int      @id @default(autoincrement())
+  title     String
+  completed Boolean  @default(false)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

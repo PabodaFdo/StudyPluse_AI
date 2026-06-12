@@ -26,6 +26,12 @@ model User {
 model Subject {
   id              Int               @id @default(autoincrement())
   name            String
+  code            String?
+  credits         Int?
+  gradeTarget     String?
+  currentStanding String?
+  status          String?
+  description     String?
   userId          Int
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt       DateTime          @default(now())

@@ -1,48 +1,143 @@
-import { useState } from 'react';
-import { BookOpen, Plus, Target, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BookOpen, Plus, Target, Trash2, Edit2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
 import Select from '../components/Select';
-import Badge from '../components/Badge';
+import LoadingSpinner from '../components/LoadingSpinner';
+import api from '../services/api';
 
 const Subjects = () => {
   const [openAddModal, setOpenAddModal] = useState(false);
-  const [subjects, setSubjects] = useState([
-    { id: 1, name: 'Calculus III', code: 'MATH 301', credits: 4, target: 'A', current: 'A-', health: 'green' },
-    { id: 2, name: 'Quantum Mechanics', code: 'PHYS 410', credits: 4, target: 'A', current: 'B+', health: 'blue' },
-    { id: 3, name: 'Data Structures & Algorithms', code: 'CS 210', credits: 3, target: 'A+', current: 'A', health: 'green' },
-    { id: 4, name: 'Organic Chemistry', code: 'CHEM 202', credits: 4, target: 'B+', current: 'C-', health: 'red' },
-  ]);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [subjects, setSubjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingSubjectId, setEditingSubjectId] = useState(null);
+
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [subjectToDelete, setSubjectToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [newName, setNewName] = useState('');
   const [newCode, setNewCode] = useState('');
   const [newCredits, setNewCredits] = useState('3');
   const [newTarget, setNewTarget] = useState('A');
 
-  const handleAddSubject = (e) => {
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  const fetchSubjects = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get('/subjects');
+      // Normalize data to match UI needs
+      const formatted = res.data.map(sub => ({
+        id: sub.id,
+        name: sub.name || sub.subjectName || 'Unknown Subject',
+        code: sub.code || 'N/A',
+        credits: sub.credits || 0,
+        target: sub.gradeTarget || sub.target || 'N/A',
+        current: sub.currentStanding || sub.current || '-',
+        health: sub.status === 'red' ? 'red' : sub.status === 'yellow' ? 'yellow' : 'green',
+        raw: sub // keep raw data for updates
+      }));
+      setSubjects(formatted);
+    } catch (error) {
+      toast.error('Failed to load subjects. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddSubject = async (e) => {
     e.preventDefault();
-    if (!newName || !newCode) {
-      toast.error('Please fill in Name and Code');
+    if (!newName) {
+      toast.error('Please fill in the Subject Name');
       return;
     }
-    const newSub = {
-      id: Date.now(),
-      name: newName,
-      code: newCode,
-      credits: parseInt(newCredits),
-      target: newTarget,
-      current: '-',
-      health: 'blue',
-    };
-    setSubjects([...subjects, newSub]);
-    setNewName('');
-    setNewCode('');
-    setOpenAddModal(false);
-    toast.success(`${newName} added successfully!`);
+    try {
+      await api.post('/subjects', {
+        subjectName: newName,
+        name: newName,
+        code: newCode,
+        credits: parseInt(newCredits),
+        gradeTarget: newTarget
+      });
+      setNewName('');
+      setNewCode('');
+      setOpenAddModal(false);
+      toast.success(`${newName} added successfully!`);
+      fetchSubjects();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add subject');
+    }
   };
+
+  const handleUpdateSubject = async (e) => {
+    e.preventDefault();
+    if (!newName) {
+      toast.error('Please fill in the Subject Name');
+      return;
+    }
+    try {
+      await api.put(`/subjects/${editingSubjectId}`, {
+        subjectName: newName,
+        name: newName,
+        code: newCode,
+        credits: parseInt(newCredits),
+        gradeTarget: newTarget
+      });
+      setNewName('');
+      setNewCode('');
+      setEditingSubjectId(null);
+      setOpenEditModal(false);
+      toast.success(`Subject updated successfully!`);
+      fetchSubjects();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update subject');
+    }
+  };
+
+  const openEdit = (sub) => {
+    setNewName(sub.name);
+    setNewCode(sub.code === 'N/A' ? '' : sub.code);
+    setNewCredits(sub.credits.toString());
+    setNewTarget(sub.target === 'N/A' ? 'A' : sub.target);
+    setEditingSubjectId(sub.id);
+    setOpenEditModal(true);
+  };
+
+  const handleDeleteClick = (sub) => {
+    setSubjectToDelete(sub);
+    setOpenDeleteModal(true);
+  };
+
+  const confirmDeleteSubject = async () => {
+    if (!subjectToDelete) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/subjects/${subjectToDelete.id}`);
+      toast.success('Subject deleted');
+      setOpenDeleteModal(false);
+      setSubjectToDelete(null);
+      fetchSubjects();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete subject');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 w-full items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -51,7 +146,13 @@ const Subjects = () => {
         subtitle="Manage your courses, credits, target grades, and current standings."
         icon={BookOpen}
         action={
-          <Button onClick={() => setOpenAddModal(true)} className="flex items-center gap-1.5">
+          <Button onClick={() => {
+            setNewName('');
+            setNewCode('');
+            setNewCredits('3');
+            setNewTarget('A');
+            setOpenAddModal(true);
+          }} className="flex items-center gap-1.5">
             <Plus className="h-4 w-4" /> Add Subject
           </Button>
         }
@@ -66,7 +167,14 @@ const Subjects = () => {
                   <span className={`status-badge ${sub.health === 'red' ? 'status-danger' : sub.health === 'yellow' ? 'status-warning' : 'status-success'}`}>{sub.code}</span>
                   <h3 className="font-bold text-white text-lg mt-1">{sub.name}</h3>
                 </div>
-                <BookOpen className={`h-5 w-5 text-gray-500`} />
+                <div className="flex gap-2">
+                  <button onClick={() => openEdit(sub)} className="text-gray-400 hover:text-brand-400 transition-colors">
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => handleDeleteClick(sub)} className="text-gray-400 hover:text-red-500 transition-colors">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4 text-xs mt-4 py-3 border-y border-white/5">
@@ -94,11 +202,16 @@ const Subjects = () => {
             </div>
           </div>
         ))}
+        {subjects.length === 0 && (
+          <div className="col-span-full py-10 text-center text-gray-500">
+            No subjects found. Add a subject to get started.
+          </div>
+        )}
       </div>
 
-      {/* Add Subject Modal */}
-      <Modal open={openAddModal} onClose={() => setOpenAddModal(false)} title="Add New Subject">
-        <form onSubmit={handleAddSubject} className="space-y-4 mt-2">
+      {/* Add/Edit Subject Modal */}
+      <Modal open={openAddModal || openEditModal} onClose={() => { setOpenAddModal(false); setOpenEditModal(false); }} title={openEditModal ? "Edit Subject" : "Add New Subject"}>
+        <form onSubmit={openEditModal ? handleUpdateSubject : handleAddSubject} className="space-y-4 mt-2">
           <Input
             label="Subject Name"
             placeholder="e.g. Advanced Calculus"
@@ -140,7 +253,7 @@ const Subjects = () => {
             />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
-            <Button type="button" variant="secondary" onClick={() => setOpenAddModal(false)}>
+            <Button type="button" variant="secondary" onClick={() => { setOpenAddModal(false); setOpenEditModal(false); }}>
               Cancel
             </Button>
             <Button type="submit">
@@ -148,6 +261,23 @@ const Subjects = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal open={openDeleteModal} onClose={() => !isDeleting && setOpenDeleteModal(false)} title="Delete Subject?">
+        <div className="space-y-4 mt-2 text-left">
+          <p className="text-sm text-[#6b6388] dark:text-slate-300">
+            Are you sure you want to delete <span className="font-bold text-[#241b4b] dark:text-white">{subjectToDelete?.name}</span>? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <Button type="button" variant="secondary" onClick={() => setOpenDeleteModal(false)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={confirmDeleteSubject} disabled={isDeleting} className="bg-red-500 hover:bg-red-600 text-white border-transparent">
+              {isDeleting ? 'Deleting...' : 'Delete Subject'}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

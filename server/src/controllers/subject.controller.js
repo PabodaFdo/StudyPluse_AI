@@ -26,12 +26,12 @@ const createSubject = asyncHandler(async (req, res) => {
   const subject = await prisma.subject.create({
     data: {
       name: subjectName,
-      code: req.body.code,
-      credits: req.body.credits,
-      gradeTarget: req.body.gradeTarget,
-      currentStanding: req.body.currentStanding,
-      status: req.body.status,
-      description: req.body.description,
+      ...(req.body.code !== undefined && { code: req.body.code }),
+      ...(req.body.credits !== undefined && { credits: Number(req.body.credits) }),
+      ...(req.body.gradeTarget !== undefined && { gradeTarget: req.body.gradeTarget }),
+      ...(req.body.currentStanding !== undefined && { currentStanding: req.body.currentStanding }),
+      ...(req.body.status !== undefined && { status: req.body.status }),
+      ...(req.body.description !== undefined && { description: req.body.description }),
       userId: req.user.id
     }
   });
@@ -68,18 +68,21 @@ const updateSubject = asyncHandler(async (req, res) => {
   }
 
   const subjectName = req.body.subjectName || req.body.name;
+  const { code, credits, gradeTarget, currentStanding, status, description } = req.body;
+
+  const updateData = {};
+
+  if (subjectName !== undefined) updateData.name = subjectName;
+  if (code !== undefined) updateData.code = code;
+  if (credits !== undefined) updateData.credits = Number(credits);
+  if (gradeTarget !== undefined) updateData.gradeTarget = gradeTarget;
+  if (currentStanding !== undefined) updateData.currentStanding = currentStanding;
+  if (status !== undefined) updateData.status = status;
+  if (description !== undefined) updateData.description = description;
 
   const updatedSubject = await prisma.subject.update({
     where: { id: subject.id },
-    data: { 
-      name: subjectName || subject.name,
-      code: req.body.code !== undefined ? req.body.code : subject.code,
-      credits: req.body.credits !== undefined ? req.body.credits : subject.credits,
-      gradeTarget: req.body.gradeTarget !== undefined ? req.body.gradeTarget : subject.gradeTarget,
-      currentStanding: req.body.currentStanding !== undefined ? req.body.currentStanding : subject.currentStanding,
-      status: req.body.status !== undefined ? req.body.status : subject.status,
-      description: req.body.description !== undefined ? req.body.description : subject.description
-    }
+    data: updateData
   });
 
   res.status(200).json(updatedSubject);

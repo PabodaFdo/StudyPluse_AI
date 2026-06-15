@@ -1,75 +1,95 @@
 # 🎓 StudyPulse AI
 
-StudyPulse AI is a full-stack AI-powered student productivity and academic growth platform designed to help students organize learning materials, manage subjects, create smart notes, track focus sessions, monitor academic progress, and grow a virtual Study Garden through consistent study habits.
+**StudyPulse AI** is a full-stack student productivity and academic growth platform that helps students manage subjects, organize smart notes, track focus sessions, monitor academic records, view learning analytics, and grow a gamified **Study Garden** through consistent study habits.
 
-The project is built as a portfolio project for Software Engineering, Full Stack Development, AI/ML, and Full Stack + AI internship opportunities.
-
----
-
-## 🌟 Project Vision
-
-Many students struggle with scattered notes, weak revision habits, poor focus consistency, and late awareness of academic risk. StudyPulse AI solves this by combining study management, productivity tracking, gamification, academic analytics, and planned AI-assisted learning features into one modern platform.
+The project is being developed as a portfolio project for **Software Engineering**, **Full Stack Development**, **AI/ML**, and **Full Stack + AI internship** opportunities.
 
 > Study smarter. Grow better. Bloom with StudyPulse AI.
 
 ---
 
-## ✨ Features
+## 🌟 Project Vision
 
-### 📚 Smart Notes
+Many students struggle with scattered notes, weak revision habits, poor focus consistency, and late awareness of academic risk. StudyPulse AI solves this by combining:
 
-* Create, edit, delete, and organize notes.
-* Group notes by subjects.
-* Mark notes as revised.
-* Reward students with Study Garden growth points after revision.
+* Study management
+* Productivity tracking
+* Academic progress monitoring
+* Gamification
+* Dashboard analytics
+* Planned AI/ML-powered learning features
 
-### 📘 Subject Management
+into one modern student-focused platform.
 
-* Add and manage academic subjects.
-* Store subject code, credits, target grade, current standing, and status.
-* Connect notes, focus sessions, and academic records to subjects.
+---
 
-### ⏱️ FocusFlow Timer
-
-* Track study sessions.
-* Store focus duration by subject.
-* View focus session history and analytics.
-* Reward completed focus sessions with growth points.
-
-### 🌱 Study Garden
-
-* Gamified learning progress system.
-* Students earn growth points through study actions.
-* Plant growth changes according to total points.
-* Growth activity history is stored in the database.
-
-### 📊 Academic Records
-
-* Store academic performance records.
-* Track grades, attendance, assignments, quizzes, study hours, deadlines, and exam marks.
-* Designed to support future academic risk prediction.
-
-### 📈 Dashboard
-
-* View summary counts for subjects, notes, focus sessions, academic records, and growth progress.
-* Provides backend-ready data for charts and analytics.
+## ✨ Key Features
 
 ### 🔐 Authentication
 
 * User registration and login.
-* JWT-based protected routes.
+* JWT-based authentication.
+* Protected frontend routes.
 * Password hashing with bcrypt.
-* Authenticated users can only access their own data.
+* Authenticated users can access only their own data.
+
+### 📘 Subject Management
+
+* Add, update, delete, and manage academic subjects.
+* Store subject name, code, credits, target grade, current standing, status, and description.
+* Connect notes, focus sessions, and academic records to subjects.
+
+### 📚 Smart Notes
+
+* Create, edit, delete, and organize notes.
+* Group notes by subject.
+* Mark notes as revised.
+* Reward students with Study Garden growth points after revision.
+
+### ⏱️ FocusFlow Timer
+
+* Pomodoro-style focus session tracking.
+* Save focus sessions by subject.
+* Track total study minutes and study hours.
+* Support custom focus/break timer settings.
+* Reward completed focus sessions with growth points.
+
+### 📊 Academic Records
+
+* Add academic performance records.
+* Store course code, course title, credits, grade, attendance, assignments, quizzes, study hours, missed deadlines, and exam marks.
+* Support projected GPA/CGPA style calculations.
+* Designed to support future academic risk prediction.
+
+### 🌱 Study Garden
+
+* Gamified student progress system.
+* Students earn growth points through learning actions.
+* Plant stages change based on total growth points.
+* Growth activity history is stored in the database.
+* Supports manual garden actions such as watering and fertilizer.
+
+### 📈 Dashboard
+
+* View summary of focus sessions, notes, study hours, subjects, academic records, and Study Garden progress.
+* Includes charts for weekly focus overview and subject health.
+* Shows Study Garden preview, academic records summary, and study quest suggestions.
+
+### 🎯 Study Quests
+
+* Planned/ongoing feature for daily and weekly study tasks.
+* Designed to reward students with growth points.
+* Intended to improve consistency and study discipline.
 
 ### 🤖 Planned AI/ML Features
 
 * Academic risk prediction.
+* Subject health score.
+* Weak topic detection.
 * PDF text extraction.
 * Summary generation.
 * Quiz generation.
 * Flashcard generation.
-* Weak topic detection.
-* Subject health score.
 
 ---
 
@@ -83,6 +103,7 @@ Many students struggle with scattered notes, weak revision habits, poor focus co
 | Database                 | PostgreSQL                                             |
 | ORM                      | Prisma                                                 |
 | Authentication           | JWT, bcryptjs                                          |
+| API Communication        | Axios                                                  |
 | API Testing              | Postman                                                |
 | Planned AI/ML Service    | Python, FastAPI                                        |
 | Planned ML/NLP Libraries | scikit-learn, pandas, NumPy, pdfplumber                |
@@ -102,6 +123,7 @@ React Frontend
 ├── Focus Timer
 ├── Study Garden
 ├── Academic Records
+├── Study Quests
 └── Planned AI Pages
         │
         ▼
@@ -111,6 +133,7 @@ Node.js + Express Backend
 ├── Protected REST APIs
 ├── Business Logic
 ├── Study Garden Points
+├── Dashboard Analytics
 └── Prisma Database Access
         │
         ▼
@@ -128,12 +151,13 @@ PostgreSQL Database
         ▼
 Planned Python FastAPI AI/ML Service
 │
+├── Academic Risk Prediction
 ├── PDF Text Extraction
 ├── Summary Generation
 ├── Quiz Generation
 ├── Flashcard Generation
 ├── Weak Topic Detection
-└── Academic Risk Prediction
+└── Subject Health Score
 ```
 
 ---
@@ -141,11 +165,12 @@ Planned Python FastAPI AI/ML Service
 ## 📁 Folder Structure
 
 ```txt
-studypulse-ai/
+StudyPluse_AI/
 ├── client/
 │   ├── public/
 │   ├── src/
 │   │   ├── assets/
+│   │   │   └── study-garden/
 │   │   ├── components/
 │   │   ├── context/
 │   │   ├── hooks/
@@ -178,7 +203,7 @@ studypulse-ai/
 │   └── .env.example
 │
 ├── ml-service/
-│   └── planned AI/ML service
+│   └── planned FastAPI AI/ML service
 │
 ├── docs/
 │   └── screenshots/
@@ -193,7 +218,7 @@ studypulse-ai/
 
 ### Prerequisites
 
-Install the following:
+Install these before running the project:
 
 ```txt
 Node.js 18+
@@ -203,7 +228,7 @@ Git
 Postman
 ```
 
-Python 3.10+ is required later for the planned AI/ML service.
+Python 3.10+ will be required later for the planned AI/ML service.
 
 ---
 
@@ -238,9 +263,9 @@ CLIENT_URL="http://localhost:5173"
 Run Prisma commands:
 
 ```bash
+npx prisma generate
 npx prisma migrate dev
 npx prisma db seed
-npx prisma generate
 ```
 
 Start the backend:
@@ -346,6 +371,13 @@ GET  /api/study-garden/activities
 POST /api/study-garden/add-points
 ```
 
+### Study Quests
+
+```txt
+GET  /api/quests
+POST /api/quests/complete
+```
+
 ### Dashboard
 
 ```txt
@@ -363,7 +395,9 @@ GET /api/dashboard/charts
 | Mark note as revised   |            +5 |
 | Complete focus session |           +10 |
 | Add academic record    |            +3 |
-| Manual bonus task      | Custom points |
+| Water plant            |           +15 |
+| Apply fertilizer       |           +40 |
+| Complete study quest   | Custom reward |
 
 ### Plant Growth Stages
 
@@ -412,27 +446,34 @@ BurnoutAlert
 
 ## 📊 Current Project Status
 
-| Module                              | Status         |
-| ----------------------------------- | -------------- |
-| Frontend UI                         | ✅ Completed    |
-| Light/Dark Theme                    | ✅ Completed    |
-| Dashboard Pages UI                  | ✅ Completed    |
-| Study Garden UI                     | ✅ Completed    |
-| Backend Structure                   | ✅ Completed    |
-| PostgreSQL + Prisma                 | ✅ Completed    |
-| JWT Authentication                  | ✅ Completed    |
-| Subjects API                        | ✅ Completed    |
-| Notes API                           | ✅ Completed    |
-| Focus Sessions API                  | ✅ Completed    |
-| Academic Records API                | ✅ Completed    |
-| Study Garden API                    | ✅ Completed    |
-| Dashboard API                       | ✅ Completed    |
-| Postman API Testing                 | ✅ Completed    |
-| Frontend Authentication Integration | 🟡 In Progress |
-| Frontend Page API Integration       | 🟡 Planned     |
-| Academic Risk ML                    | 🟡 Planned     |
-| PDF Study Assistant                 | 🟡 Planned     |
-| Deployment                          | 🟡 Planned     |
+| Module                                | Status                   |
+| ------------------------------------- | ------------------------ |
+| Frontend UI                           | ✅ Completed              |
+| Light/Dark Theme                      | ✅ Completed              |
+| Backend Structure                     | ✅ Completed              |
+| PostgreSQL + Prisma                   | ✅ Completed              |
+| JWT Authentication Backend            | ✅ Completed              |
+| Frontend Authentication Integration   | ✅ Completed              |
+| Protected Routes                      | ✅ Completed              |
+| Subjects API                          | ✅ Completed              |
+| Subjects Frontend Integration         | ✅ Completed              |
+| Notes API                             | ✅ Completed              |
+| Smart Notes Frontend Integration      | ✅ Completed              |
+| Focus Sessions API                    | ✅ Completed              |
+| Focus Timer Frontend Integration      | ✅ Completed              |
+| Academic Records API                  | ✅ Completed              |
+| Academic Records Frontend Integration | ✅ Completed              |
+| Study Garden API                      | ✅ Completed              |
+| Study Garden Frontend Integration     | ✅ Completed              |
+| Dashboard API                         | ✅ Completed              |
+| Dashboard Frontend Integration        | ✅ Completed              |
+| Postman API Testing                   | ✅ Completed              |
+| Study Quests Integration              | 🟡 In Progress / Planned |
+| Dashboard Interactivity Polish        | 🟡 In Progress           |
+| AI/ML Service                         | 🟡 Planned               |
+| Academic Risk Prediction              | 🟡 Planned               |
+| PDF Study Assistant                   | 🟡 Planned               |
+| Deployment                            | 🟡 Planned               |
 
 ---
 
@@ -441,40 +482,128 @@ BurnoutAlert
 ### Version 1 — Full-Stack MVP
 
 * [x] Frontend UI
-* [x] Dashboard pages
-* [x] Study Garden design
+* [x] Light/Dark theme
 * [x] Backend setup
-* [x] PostgreSQL + Prisma
+* [x] PostgreSQL database
+* [x] Prisma schema and migrations
 * [x] JWT authentication
+* [x] Protected routes
 * [x] Subjects CRUD
-* [x] Notes CRUD
+* [x] Smart Notes CRUD
 * [x] Focus session tracking
 * [x] Academic records tracking
 * [x] Study Garden growth points
-* [x] Dashboard backend APIs
-* [ ] Connect frontend authentication
-* [ ] Connect frontend pages to backend APIs
-* [ ] Final browser testing
+* [x] Dashboard summary and charts
+* [x] Frontend/backend API integration
+* [ ] Study Quests frontend/backend integration
+* [ ] Final responsive UI polish
 * [ ] Add screenshots to README
 
-### Version 2 — AI/ML Features
+### Version 2 — AI/ML Service
 
-* [ ] Academic risk prediction
-* [ ] Risk history
+* [ ] Create FastAPI ML service
+* [ ] Add ML service health endpoint
+* [ ] Add rule-based academic risk prediction
+* [ ] Train academic risk prediction model
+* [ ] Save model using joblib
+* [ ] Connect Express backend to FastAPI service
+* [ ] Connect frontend Risk Prediction page
+* [ ] Store risk prediction history
+
+### Version 3 — AI Study Assistant
+
+* [ ] PDF upload
 * [ ] PDF text extraction
 * [ ] Summary generation
 * [ ] Quiz generation
 * [ ] Flashcard generation
 * [ ] Weak topic detection
-
-### Version 3 — Advanced Features
-
 * [ ] Subject health score
+
+### Version 4 — Advanced Features
+
 * [ ] Mood check-in analytics
 * [ ] Burnout warning
+* [ ] Revision reminders
+* [ ] Flower/badge collection
 * [ ] Report export
 * [ ] Admin dashboard
 * [ ] Full deployment
+
+---
+
+## 🤖 Planned ML Service
+
+StudyPulse AI will use a separate Python FastAPI service for AI/ML tasks.
+
+Planned ML architecture:
+
+```txt
+React Frontend
+      ↓
+Express Backend
+      ↓
+FastAPI ML Service
+      ↓
+scikit-learn / NLP Logic
+```
+
+Planned ML service folder:
+
+```txt
+ml-service/
+├── app/
+│   ├── main.py
+│   ├── schemas.py
+│   ├── services/
+│   │   ├── risk_service.py
+│   │   ├── pdf_service.py
+│   │   ├── summary_service.py
+│   │   ├── quiz_service.py
+│   │   └── flashcard_service.py
+│   ├── models/
+│   └── data/
+├── notebooks/
+├── requirements.txt
+└── README.md
+```
+
+### Planned Academic Risk Prediction Inputs
+
+```txt
+attendancePercentage
+assignmentAverage
+quizAverage
+studyHoursPerWeek
+missedDeadlines
+focusSessionsCompleted
+previousExamMark
+```
+
+### Planned Risk Output
+
+```txt
+Low Risk
+Medium Risk
+High Risk
+```
+
+Example response:
+
+```json
+{
+  "riskLevel": "Medium Risk",
+  "confidence": 0.76,
+  "reasons": [
+    "Attendance is below recommended level",
+    "Study hours are low"
+  ],
+  "recommendations": [
+    "Complete at least 3 focus sessions this week",
+    "Revise weak subjects using flashcards"
+  ]
+}
+```
 
 ---
 
@@ -492,18 +621,33 @@ Notes CRUD
 Focus session creation
 Academic record creation
 Study Garden point updates
+Growth activity logs
 Dashboard summary
 Dashboard chart data
+```
+
+Frontend testing areas:
+
+```txt
+Login and register flow
+Protected route access
+Subjects page API integration
+Smart Notes API integration
+Focus Timer save flow
+Academic Records CRUD
+Study Garden growth points
+Dashboard summary cards
+Dark/light theme readability
 ```
 
 Planned testing:
 
 ```txt
-Frontend integration testing
+Frontend error handling testing
 Responsive UI testing
-Error handling testing
 Jest tests
-Pytest tests for AI/ML service
+Pytest tests for ML service
+Deployment testing
 ```
 
 ---
@@ -527,6 +671,13 @@ Smart Notes
 Focus Timer
 Study Garden
 Academic Records
+Study Quests
+```
+
+Example README image format:
+
+```md
+![Dashboard](docs/screenshots/dashboard.png)
 ```
 
 ---
@@ -539,21 +690,33 @@ This project demonstrates:
 Full-stack application development
 REST API development
 JWT authentication
+Protected route handling
 Database design with Prisma
 PostgreSQL integration
-Protected route handling
 Frontend dashboard design
+API integration with Axios
 Gamification logic
+Study analytics
 Postman API testing
 AI/ML-ready architecture
 Real-world problem solving
+```
+
+After completing the ML service, the project will also demonstrate:
+
+```txt
+FastAPI ML microservice development
+scikit-learn model training
+Academic risk prediction
+PDF/NLP processing
+Full Stack + AI system architecture
 ```
 
 ---
 
 ## 📌 CV Bullet
 
-Built StudyPulse AI, a full-stack student productivity and academic growth platform with JWT authentication, subject and note management, focus session tracking, academic records, dashboard analytics, and a gamified Study Garden system using React, Express.js, PostgreSQL, Prisma, and Node.js, with planned AI/ML features for academic risk prediction and PDF-based study assistance.
+Built StudyPulse AI, a full-stack student productivity and academic growth platform with JWT authentication, subject and note management, focus session tracking, academic records, dashboard analytics, and a gamified Study Garden system using React, Express.js, PostgreSQL, Prisma, and Node.js, with planned FastAPI-based AI/ML features for academic risk prediction and PDF-based study assistance.
 
 ---
 

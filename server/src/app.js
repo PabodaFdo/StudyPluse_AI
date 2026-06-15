@@ -9,6 +9,7 @@ const academicRoutes = require('./routes/academic.routes');
 const gardenRoutes = require('./routes/garden.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const questRoutes = require('./routes/quest.routes');
+const riskRoutes = require('./routes/risk.routes');
 const { errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
@@ -31,7 +32,7 @@ app.use('/api/academic-records', academicRoutes);
 app.use('/api/study-garden', gardenRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/quests', questRoutes);
-
+app.use('/api/risk', riskRoutes);
 // Error Handler
 app.use(errorHandler);
 

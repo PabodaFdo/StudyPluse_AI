@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 
 from app.schemas import AcademicRiskRequest, AcademicRiskResponse
-from app.services.risk_service import predict_academic_risk_rule_based
+from app.services.risk_service import predict_academic_risk_ml
 
 app = FastAPI(
     title="StudyPulse ML Service",
@@ -38,4 +38,4 @@ def health_check():
 
 @app.post("/predict-risk", response_model=AcademicRiskResponse)
 def predict_risk(data: AcademicRiskRequest):
-    return predict_academic_risk_rule_based(data)
+    return predict_academic_risk_ml(data)

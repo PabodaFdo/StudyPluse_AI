@@ -1,10 +1,27 @@
-# 🎓 StudyPulse AI
+<div align="center">
+
+# 🎓 StudyPulse AI 🌱
+
+<img src="https://readme-typing-svg.demolab.com?font=Inter&weight=700&size=28&duration=2500&pause=800&color=8B5CF6&center=true&vCenter=true&width=800&lines=AI-Powered+Student+Productivity+Platform;Smart+Notes+%7C+Focus+Tracking+%7C+Study+Garden;Full-Stack+%2B+AI%2FML+Portfolio+Project" alt="Typing SVG" />
+
+<br />
+
+![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge\&logo=react\&logoColor=black)
+![Node.js](https://img.shields.io/badge/Backend-Node.js-339933?style=for-the-badge\&logo=node.js\&logoColor=white)
+![Express](https://img.shields.io/badge/API-Express.js-000000?style=for-the-badge\&logo=express\&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=for-the-badge\&logo=postgresql\&logoColor=white)
+![Prisma](https://img.shields.io/badge/ORM-Prisma-2D3748?style=for-the-badge\&logo=prisma\&logoColor=white)
+![FastAPI](https://img.shields.io/badge/Planned_AI-FastAPI-009688?style=for-the-badge\&logo=fastapi\&logoColor=white)
+
+<br />
 
 **StudyPulse AI** is a full-stack student productivity and academic growth platform that helps students manage subjects, organize smart notes, track focus sessions, monitor academic records, view learning analytics, and grow a gamified **Study Garden** through consistent study habits.
 
-The project is being developed as a portfolio project for **Software Engineering**, **Full Stack Development**, **AI/ML**, and **Full Stack + AI internship** opportunities.
+<br />
 
-> Study smarter. Grow better. Bloom with StudyPulse AI.
+> 🌱 Study smarter. Grow better. Bloom with StudyPulse AI.
+
+</div>
 
 ---
 

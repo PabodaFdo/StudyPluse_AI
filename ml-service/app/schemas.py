@@ -23,3 +23,23 @@ class AcademicRiskResponse(BaseModel):
     confidence: float
     reasons: List[str]
     recommendations: List[str]
+
+
+class SubjectHealthRequest(BaseModel):
+    subjectName: str = Field(..., min_length=2)
+    attendancePercentage: float = Field(..., ge=0, le=100)
+    averageMark: float = Field(..., ge=0, le=100)
+    quizAverage: float = Field(..., ge=0, le=100)
+    studyHoursThisWeek: float = Field(..., ge=0)
+    focusSessionsCompleted: int = Field(..., ge=0)
+    notesCount: int = Field(..., ge=0)
+    missedDeadlines: int = Field(..., ge=0)
+
+
+class SubjectHealthResponse(BaseModel):
+    subjectName: str
+    healthScore: int
+    status: str
+    strengths: List[str]
+    concerns: List[str]
+    recommendations: List[str]

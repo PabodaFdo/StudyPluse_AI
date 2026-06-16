@@ -5,6 +5,9 @@ from datetime import datetime
 from app.schemas import AcademicRiskRequest, AcademicRiskResponse
 from app.services.risk_service import predict_academic_risk_ml
 
+from app.schemas import SubjectHealthRequest, SubjectHealthResponse
+from app.services.subject_health_service import calculate_subject_health
+
 app = FastAPI(
     title="StudyPulse ML Service",
     description="Machine learning microservice for StudyPulse AI",
@@ -39,3 +42,7 @@ def health_check():
 @app.post("/predict-risk", response_model=AcademicRiskResponse)
 def predict_risk(data: AcademicRiskRequest):
     return predict_academic_risk_ml(data)
+
+@app.post("/subject-health", response_model=SubjectHealthResponse)
+def subject_health(data: SubjectHealthRequest):
+    return calculate_subject_health(data)

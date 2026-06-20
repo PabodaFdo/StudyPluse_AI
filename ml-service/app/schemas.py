@@ -61,3 +61,10 @@ class WeakTopicResponse(BaseModel):
     confidence: float
     reasons: List[str]
     recommendations: List[str]
+
+class PdfExtractResponse(BaseModel):
+    filename: str
+    pageCount: int
+    characterCount: int
+    text: str
+    message: str

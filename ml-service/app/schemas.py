@@ -71,13 +71,14 @@ class PdfExtractResponse(BaseModel):
 
 
 class SummaryRequest(BaseModel):
-    text: str = Field(..., min_length=50)
-    maxSentences: int = Field(default=5, ge=3, le=10)
+    text: str = Field(..., min_length=10)
 
 
 class SummaryResponse(BaseModel):
-    summary: str
-    keyPoints: List[str]
-    sentenceCount: int
-    wordCount: int
+    success: bool
+    source: str
+    main_summary: str
+    important_points: List[str]
+    key_terms: List[str]
+    word_count: int
     message: str

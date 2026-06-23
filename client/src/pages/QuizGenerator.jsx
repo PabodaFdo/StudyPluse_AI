@@ -1,108 +1,182 @@
-import { useState } from 'react';
-import { HelpCircle, Sparkles, AlertCircle, RefreshCw, Trophy } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { HelpCircle, Sparkles, AlertCircle, RefreshCw, BookOpen, FileText, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Select from '../components/Select';
 import Badge from '../components/Badge';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { generateQuiz } from '../services/quiz.service';
 
-const mockQuestions = [
-  {
-    question: 'Which of the following describes Quantum Entanglement?',
-    options: [
-      'Two particles coordinate via classical radio waves',
-      'The quantum states of particles cannot be described independently',
-      'Electrons orbit protons in perfect concentric shells',
-      'A method to increase CPU clock speeds locally'
-    ],
-    answer: 1,
-  },
-  {
-    question: "What is Green's Theorem used for?",
-    options: [
-      'Finding the velocity of sound in solids',
-      'Relating line integrals around a closed curve to double integrals over the bounded region',
-      'Calculating the risk of student burnout in real-time',
-      'Optimizing rendering times for Framer Motion transitions'
-    ],
-    answer: 1,
-  },
-  {
-    question: 'What is the worst-case time complexity of searching in a Binary Search Tree (unbalanced)?',
-    options: ['O(log n)', 'O(1)', 'O(n)', 'O(n log n)'],
-    answer: 2,
+const getCorrectAnswerLabel = (question) => {
+  const labels = ["A", "B", "C", "D"];
+
+  if (!question.correct_answer) return "";
+
+  if (labels.includes(question.correct_answer)) {
+    return question.correct_answer;
   }
-];
+
+  const index = question.options?.findIndex(
+    option => option.toLowerCase().trim() === question.correct_answer.toLowerCase().trim()
+  );
+
+  return index >= 0 ? labels[index] : question.correct_answer;
+};
 
 const QuizGenerator = () => {
-  const [selectedSubject, setSelectedSubject] = useState('PHYS 410');
-  const [questionCount, setQuestionCount] = useState('3');
-  const [quizActive, setQuizActive] = useState(false);
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [selectedOpt, setSelectedOpt] = useState(null);
-  const [score, setScore] = useState(0);
-  const [quizFinished, setQuizFinished] = useState(false);
+  const [extractedText, setExtractedText] = useState(null);
+  const [questionCount, setQuestionCount] = useState('5');
+  const [difficulty, setDifficulty] = useState('medium');
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [quizResult, setQuizResult] = useState(null);
 
-  const startQuiz = () => {
-    setQuizActive(true);
-    setQuizFinished(false);
-    setCurrentIdx(0);
-    setScore(0);
-    setSelectedOpt(null);
-    toast.success(`Generated ${questionCount} questions for ${selectedSubject}!`);
-  };
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [checkedQuestions, setCheckedQuestions] = useState({});
 
-  const handleNext = () => {
-    if (selectedOpt === null) {
-      toast.error('Please select an option');
+  useEffect(() => {
+    const text = localStorage.getItem('studypulse_extracted_text');
+    if (text) {
+      setExtractedText(text);
+    }
+
+    const savedQuiz = localStorage.getItem('studypulse_generated_quiz');
+    if (savedQuiz) {
+      try {
+        setQuizResult(JSON.parse(savedQuiz));
+      } catch (e) {
+        console.error("Failed to parse saved quiz", e);
+      }
+    }
+
+    const savedAnswers = localStorage.getItem('studypulse_quiz_selected_answers');
+    if (savedAnswers) {
+      try {
+        setSelectedAnswers(JSON.parse(savedAnswers));
+      } catch (e) {
+        console.error("Failed to parse saved answers", e);
+      }
+    }
+
+    const savedChecked = localStorage.getItem('studypulse_quiz_checked_questions');
+    if (savedChecked) {
+      try {
+        setCheckedQuestions(JSON.parse(savedChecked));
+      } catch (e) {
+        console.error("Failed to parse checked questions", e);
+      }
+    }
+  }, []);
+
+  const handleGenerate = async () => {
+    if (!extractedText) {
+      toast.error('No extracted text found. Please upload a PDF first.');
       return;
     }
-    const currentQ = mockQuestions[currentIdx];
-    let nextScore = score;
-    if (selectedOpt === currentQ.answer) {
-      nextScore += 1;
-      setScore(nextScore);
-      toast.success('Correct answer! +5 XP');
-    } else {
-      toast.error(`Incorrect. Correct: ${currentQ.options[currentQ.answer]}`);
-    }
-
-    if (currentIdx + 1 < mockQuestions.length) {
-      setCurrentIdx(currentIdx + 1);
-      setSelectedOpt(null);
-    } else {
-      setQuizFinished(true);
-      toast.success('Quiz completed! Check your final standings.');
+    
+    setIsLoading(true);
+    setQuizResult(null);
+    setSelectedAnswers({});
+    setCheckedQuestions({});
+    
+    localStorage.removeItem('studypulse_generated_quiz');
+    localStorage.removeItem('studypulse_quiz_selected_answers');
+    localStorage.removeItem('studypulse_quiz_checked_questions');
+    
+    try {
+      const data = await generateQuiz({
+        text: extractedText,
+        question_count: questionCount,
+        difficulty
+      });
+      setQuizResult(data);
+      localStorage.setItem('studypulse_generated_quiz', JSON.stringify(data));
+      localStorage.setItem('studypulse_quiz_selected_answers', JSON.stringify({}));
+      localStorage.setItem('studypulse_quiz_checked_questions', JSON.stringify({}));
+      toast.success('Quiz generated successfully!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Unable to generate quiz right now. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const handleNewQuiz = () => {
+    setQuizResult(null);
+    setSelectedAnswers({});
+    setCheckedQuestions({});
+    localStorage.removeItem('studypulse_generated_quiz');
+    localStorage.removeItem('studypulse_quiz_selected_answers');
+    localStorage.removeItem('studypulse_quiz_checked_questions');
+  };
+
+  const handleResetQuiz = () => {
+    setSelectedAnswers({});
+    setCheckedQuestions({});
+    localStorage.setItem('studypulse_quiz_selected_answers', JSON.stringify({}));
+    localStorage.setItem('studypulse_quiz_checked_questions', JSON.stringify({}));
+  };
+
+  const handleSelectAnswer = (idx, ans) => {
+    setSelectedAnswers(prev => {
+      const next = { ...prev, [idx]: ans };
+      localStorage.setItem('studypulse_quiz_selected_answers', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleCheckAnswer = (idx, isCorrect) => {
+    setCheckedQuestions(prev => {
+      const next = { ...prev, [idx]: isCorrect };
+      localStorage.setItem('studypulse_quiz_checked_questions', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const score = Object.keys(checkedQuestions).reduce((acc, index) => {
+    if (checkedQuestions[index]) return acc + 1;
+    return acc;
+  }, 0);
+  
+  const totalChecked = Object.keys(checkedQuestions).length;
+
+  if (!extractedText) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="AI Quiz Generator"
+          subtitle="Generate adaptive quizzes directly from your PDF documents."
+          icon={HelpCircle}
+        />
+        <div className="glass-card p-8 border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 shadow-sm text-center space-y-4">
+          <BookOpen className="h-12 w-12 text-slate-400 dark:text-slate-500 mx-auto" />
+          <h3 className="font-bold text-slate-800 dark:text-white text-lg">No Study Material Found</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto">
+            Please upload and extract a PDF first to generate a quiz based on its contents.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="AI Quiz Generator"
-        subtitle="Test your knowledge with adaptive, AI-generated curriculum quiz questions."
+        subtitle="Generate adaptive quizzes directly from your extracted PDF."
         icon={HelpCircle}
       />
 
-      <div className="max-w-2xl mx-auto">
-        {!quizActive ? (
-          <div className="glass-card p-6 border border-white/5 bg-white/[0.02] space-y-6">
-            <h3 className="font-bold text-white text-base flex items-center gap-2">
-              <Sparkles className="h-4.5 w-4.5 text-brand-400" /> Customize Your Quiz
+      <div className="max-w-3xl mx-auto space-y-6">
+        {!quizResult && !isLoading && (
+          <div className="glass-card p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm space-y-6">
+            <h3 className="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-brand-500" /> Customize Your Quiz
             </h3>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Select
-                label="Target Subject"
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                options={[
-                  { value: 'PHYS 410', label: 'Quantum Mechanics (PHYS 410)' },
-                  { value: 'MATH 301', label: 'Calculus III (MATH 301)' },
-                  { value: 'CS 210', label: 'Data Structures (CS 210)' },
-                  { value: 'CHEM 202', label: 'Organic Chemistry (CHEM 202)' },
-                ]}
-              />
               <Select
                 label="Number of Questions"
                 value={questionCount}
@@ -113,71 +187,213 @@ const QuizGenerator = () => {
                   { value: '10', label: '10 Questions (Complete)' },
                 ]}
               />
+              <Select
+                label="Difficulty Level"
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                options={[
+                  { value: 'easy', label: 'Easy' },
+                  { value: 'medium', label: 'Medium' },
+                  { value: 'hard', label: 'Hard' },
+                ]}
+              />
             </div>
 
-            <Button onClick={startQuiz} className="w-full justify-center">
-              Generate AI Quiz
+            <Button onClick={handleGenerate} className="w-full justify-center">
+              Generate Quiz
             </Button>
           </div>
-        ) : !quizFinished ? (
-          <div className="glass-card p-6 border border-white/5 bg-white/[0.02] space-y-6">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <Badge color="purple">Question {currentIdx + 1} of {mockQuestions.length}</Badge>
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider">{selectedSubject}</span>
-            </div>
+        )}
 
-            <div>
-              <h3 className="font-semibold text-white text-base">{mockQuestions[currentIdx].question}</h3>
-              <div className="space-y-2 mt-4">
-                {mockQuestions[currentIdx].options.map((opt, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedOpt(i)}
-                    className={`w-full text-left p-3 rounded-xl border text-xs sm:text-sm transition cursor-pointer ${
-                      selectedOpt === i
-                        ? 'border-brand-500 bg-brand-500/10 text-white'
-                        : 'border-white/5 bg-white/[0.01] hover:bg-white/[0.03] text-gray-300'
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
+        {isLoading && (
+          <div className="glass-card p-12 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm flex flex-col items-center justify-center space-y-4">
+            <LoadingSpinner size="lg" />
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
+              Analyzing text and generating quiz...
+            </p>
+          </div>
+        )}
+
+        {quizResult && !isLoading && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 shadow-sm">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-brand-500" />
+                  <h3 className="font-bold text-slate-800 dark:text-white">Interactive Quiz</h3>
+                </div>
+                <div className="text-sm font-bold text-brand-600 dark:text-brand-400">
+                  Score: {score} / {quizResult.questions.length}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" />
+                  {quizResult.word_count} words
+                </span>
+                <Button variant="secondary" onClick={handleResetQuiz} className="h-7 text-xs px-3">
+                  <RefreshCw className="h-3 w-3 mr-1" /> Reset Quiz
+                </Button>
+                <Button variant="secondary" onClick={handleNewQuiz} className="h-7 text-xs px-3">
+                  <Sparkles className="h-3 w-3 mr-1" /> New Quiz
+                </Button>
               </div>
             </div>
 
-            <div className="flex justify-between items-center pt-4 border-t border-white/5">
-              <Button variant="secondary" onClick={() => setQuizActive(false)}>
-                Quit Quiz
-              </Button>
-              <Button onClick={handleNext}>
-                {currentIdx + 1 === mockQuestions.length ? 'Finish Quiz' : 'Next Question'}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="glass-card p-6 border border-white/5 bg-white/[0.02] text-center space-y-6">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-success-500/15 text-success-400">
-              <Trophy className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">Quiz Completed!</h3>
-              <p className="text-sm text-gray-400 mt-1">
-                You scored {score} out of {mockQuestions.length} on the {selectedSubject} quiz.
-              </p>
-              <p className="text-xs text-brand-300 font-bold mt-2">+{score * 15} XP Earned</p>
+            <div className="space-y-6">
+              {quizResult.questions.map((q, idx) => (
+                <QuestionCard 
+                  key={idx} 
+                  question={q} 
+                  index={idx}
+                  selectedAnswer={selectedAnswers[idx]}
+                  isChecked={checkedQuestions[idx] !== undefined}
+                  isCorrect={checkedQuestions[idx]}
+                  onSelect={(ans) => handleSelectAnswer(idx, ans)}
+                  onCheck={(isCorrect) => handleCheckAnswer(idx, isCorrect)}
+                />
+              ))}
             </div>
 
-            <div className="flex justify-center gap-3">
-              <Button onClick={() => setQuizActive(false)} variant="secondary">
-                Back to Customizer
-              </Button>
-              <Button onClick={startQuiz} className="gap-1">
-                <RefreshCw className="h-4 w-4" /> Retake Quiz
-              </Button>
+            {/* Disclaimer */}
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-800 dark:text-blue-300">
+              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+              <p className="text-xs leading-relaxed">
+                Note: AI-generated quizzes may contain mistakes. Please review with your original study material.
+              </p>
             </div>
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+const QuestionCard = ({ question, index, selectedAnswer, isChecked, isCorrect, onSelect, onCheck }) => {
+  const [showAnswer, setShowAnswer] = useState(false);
+  const labels = ["A", "B", "C", "D"];
+  const correctLabel = getCorrectAnswerLabel(question);
+
+  // Force show answer reset if parent resets quiz
+  useEffect(() => {
+    if (!isChecked && !selectedAnswer) {
+      setShowAnswer(false);
+    }
+  }, [isChecked, selectedAnswer]);
+
+  const handleCheck = () => {
+    if (!selectedAnswer) return;
+    const isAnsCorrect = selectedAnswer === correctLabel;
+    onCheck(isAnsCorrect);
+  };
+
+  return (
+    <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg">
+      <div className="flex items-center gap-2 mb-4">
+        <Badge color="purple">Question {index + 1}</Badge>
+        {question.type === 'mcq' ? (
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Multiple Choice</span>
+        ) : (
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Short Answer</span>
+        )}
+      </div>
+      
+      <h4 className="font-bold text-slate-800 dark:text-white mb-4 text-base">
+        {question.question}
+      </h4>
+
+      {question.type === 'mcq' && question.options && question.options.length > 0 && (
+        <div className="space-y-2 mb-6">
+          {question.options.map((opt, i) => {
+            const label = labels[i];
+            const isSelected = selectedAnswer === label;
+            
+            let borderClass = "border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-slate-600/50 dark:bg-slate-900/40 dark:hover:bg-slate-800/70";
+            let textClass = "text-slate-700 dark:text-slate-100 font-medium";
+            let labelClass = "font-bold text-brand-600 dark:text-brand-300 mr-3";
+
+            if (isChecked) {
+              if (label === correctLabel) {
+                borderClass = "border-success-400 bg-success-50 dark:border-success-400 dark:bg-success-500/20";
+                textClass = "text-success-800 dark:text-success-100 font-medium";
+                labelClass = "font-bold text-success-600 dark:text-success-300 mr-3";
+              } else if (isSelected && label !== correctLabel) {
+                borderClass = "border-red-400 bg-red-50 dark:border-red-400 dark:bg-red-500/20";
+                textClass = "text-red-800 dark:text-red-100 font-medium";
+                labelClass = "font-bold text-red-600 dark:text-red-300 mr-3";
+              } else {
+                borderClass = "border-slate-200 bg-slate-50 dark:border-slate-600/30 dark:bg-slate-900/20";
+                textClass = "text-slate-500 dark:text-slate-300 font-medium";
+                labelClass = "font-bold text-slate-400 dark:text-slate-400 mr-3";
+              }
+            } else {
+              if (isSelected) {
+                borderClass = "border-brand-400 bg-brand-50 dark:border-brand-400 dark:bg-brand-500/20 ring-1 ring-brand-400";
+                textClass = "text-brand-900 dark:text-slate-100 font-medium";
+              }
+            }
+
+            return (
+              <button 
+                key={i} 
+                onClick={() => !isChecked && onSelect(label)}
+                disabled={isChecked}
+                className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer disabled:cursor-default flex items-start ${borderClass}`}
+              >
+                <span className={labelClass}>{label}.</span>
+                <span className={textClass}>{opt}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {question.type === 'mcq' ? (
+        !isChecked ? (
+          <Button onClick={handleCheck} disabled={!selectedAnswer} className="w-full justify-center">
+            Check Answer
+          </Button>
+        ) : (
+          <div className={`mt-4 p-4 rounded-xl border ${isCorrect ? 'bg-success-50 border-success-200 dark:bg-success-500/10 dark:border-success-500/20' : 'bg-red-50 border-red-200 dark:bg-red-500/10 dark:border-red-500/20'}`}>
+            <div className="mb-2">
+              <span className={`text-xs font-bold uppercase tracking-wider block mb-1 ${isCorrect ? 'text-success-700 dark:text-success-400' : 'text-red-700 dark:text-red-400'}`}>
+                {isCorrect ? 'Correct!' : 'Incorrect.'}
+              </span>
+              {!isCorrect && (
+                <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                  Correct answer is {correctLabel}. {question.options[labels.indexOf(correctLabel)] || question.correct_answer}
+                </p>
+              )}
+            </div>
+            {question.explanation && (
+              <div className={`mt-3 pt-3 border-t ${isCorrect ? 'border-success-200 dark:border-success-500/20' : 'border-red-200 dark:border-red-500/20'}`}>
+                <span className={`text-xs font-bold uppercase tracking-wider block mb-1 ${isCorrect ? 'text-success-700 dark:text-success-400' : 'text-red-700 dark:text-red-400'}`}>Explanation</span>
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{question.explanation}</p>
+              </div>
+            )}
+          </div>
+        )
+      ) : (
+        // Short Answer UI
+        !showAnswer ? (
+          <Button variant="secondary" onClick={() => setShowAnswer(true)} className="w-full justify-center">
+            Show Answer
+          </Button>
+        ) : (
+          <div className="mt-4 p-4 rounded-xl bg-success-50 dark:bg-success-500/10 border border-success-200 dark:border-success-500/20">
+            <div className="mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-success-700 dark:text-success-400 block mb-1">Correct Answer</span>
+              <p className="text-sm font-semibold text-slate-800 dark:text-white">{question.correct_answer}</p>
+            </div>
+            {question.explanation && (
+              <div className="mt-3 pt-3 border-t border-success-200 dark:border-success-500/20">
+                <span className="text-xs font-bold uppercase tracking-wider text-success-700 dark:text-success-400 block mb-1">Explanation</span>
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{question.explanation}</p>
+              </div>
+            )}
+          </div>
+        )
+      )}
     </div>
   );
 };

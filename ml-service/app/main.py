@@ -18,6 +18,9 @@ from app.services.pdf_service import extract_text_from_pdf_bytes
 from app.schemas import SummaryRequest, SummaryResponse
 from app.services.summary_service import generate_summary
 
+from app.schemas import QuizRequest, QuizResponse
+from app.services.quiz_service import generate_quiz
+
 app = FastAPI(
     title="StudyPulse ML Service",
     description="Machine learning microservice for StudyPulse AI",
@@ -116,3 +119,23 @@ def generate_summary_endpoint(data: SummaryRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to generate summary.")
+
+@app.post("/generate-quiz", response_model=QuizResponse)
+def generate_quiz_endpoint(data: QuizRequest):
+    if not data.text or not data.text.strip():
+        raise HTTPException(status_code=400, detail="Text cannot be empty.")
+    
+    question_count = data.question_count if data.question_count else 5
+    if question_count < 1:
+        question_count = 5
+    if question_count > 10:
+        question_count = 10
+        
+    difficulty = data.difficulty if data.difficulty else "medium"
+    
+    try:
+        return generate_quiz(data.text, question_count, difficulty)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to generate quiz.")

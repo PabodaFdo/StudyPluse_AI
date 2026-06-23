@@ -1,161 +1,151 @@
+import os
 import re
-from collections import Counter
+import json
+from dotenv import load_dotenv
+from typing import Dict, Any, List
 
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
 
-STOPWORDS = {
-    "the", "is", "are", "a", "an", "and", "or", "of", "to", "in", "on", "for",
-    "with", "as", "by", "at", "from", "this", "that", "it", "be", "was", "were",
-    "can", "will", "has", "have", "had", "but", "not", "we", "you", "they",
-    "their", "our", "your", "into", "also", "than", "then", "so", "if", "its",
-    "these", "those", "such", "using", "used", "use", "based", "may", "many",
-    "more", "most", "some", "each", "between", "within", "without", "about"
-}
+from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
 
-IMPORTANT_STUDY_WORDS = {
-    "concept", "definition", "important", "purpose", "advantage", "disadvantage",
-    "process", "method", "example", "model", "system", "data", "analysis",
-    "learning", "algorithm", "performance", "feature", "result", "problem",
-    "solution", "objective", "class", "object", "inheritance", "encapsulation",
-    "polymorphism"
-}
+load_dotenv()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
-
-def clean_text(text: str) -> str:
+def clean_pdf_text(text: str) -> str:
     text = text.replace("\n", " ")
     text = re.sub(r"--- Page \d+ ---", " ", text)
     text = re.sub(r"\s+", " ", text)
     text = re.sub(r"([A-Z])\s(?=[A-Z]\s)", r"\1", text)
     return text.strip()
 
-
-def split_sentences(text: str):
+def split_into_sentences(text: str) -> List[str]:
     sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    cleaned = []
+    for s in sentences:
+        s = s.strip()
+        if len(s) > 30 and len(s.split()) >= 5:
+            cleaned.append(s)
+    return cleaned
 
-    cleaned_sentences = []
-    seen = set()
+def generate_tfidf_fallback_summary(text: str) -> Dict[str, Any]:
+    cleaned_text = clean_pdf_text(text)
+    sentences = split_into_sentences(cleaned_text)
+    word_count = len(cleaned_text.split())
+    
+    if len(sentences) < 3:
+        return {
+            "success": True,
+            "source": "fallback",
+            "main_summary": cleaned_text[:500],
+            "important_points": [s for s in sentences],
+            "key_terms": [],
+            "word_count": word_count,
+            "message": "Groq unavailable. Generated using fallback summary."
+        }
+        
+    try:
+        vectorizer = TfidfVectorizer(stop_words='english')
+        tfidf_matrix = vectorizer.fit_transform(sentences)
+        scores = np.array(tfidf_matrix.sum(axis=1)).flatten()
+        
+        ranked_indices = scores.argsort()[::-1]
+        top_indices = ranked_indices[:min(5, len(sentences))]
+        
+        # Sort indices to keep original order
+        top_indices = sorted(top_indices)
+        
+        selected_sentences = [sentences[i] for i in top_indices]
+        main_summary = " ".join(selected_sentences)
+        important_points = selected_sentences[:3]
+        
+        # Extract some basic key terms
+        feature_names = vectorizer.get_feature_names_out()
+        tfidf_scores = np.array(tfidf_matrix.sum(axis=0)).flatten()
+        top_term_indices = tfidf_scores.argsort()[::-1][:5]
+        key_terms = [feature_names[i] for i in top_term_indices]
+        
+    except Exception as e:
+        print(f"TF-IDF failed: {e}")
+        main_summary = cleaned_text[:500]
+        important_points = [cleaned_text[:200]]
+        key_terms = []
+        
+    return {
+        "success": True,
+        "source": "fallback",
+        "main_summary": main_summary,
+        "important_points": important_points,
+        "key_terms": key_terms,
+        "word_count": word_count,
+        "message": "Groq unavailable. Generated using fallback summary."
+    }
 
-    for sentence in sentences:
-        sentence = sentence.strip()
+def generate_groq_summary(text: str) -> Dict[str, Any]:
+    if not Groq or not GROQ_API_KEY:
+        raise ValueError("Groq API not configured")
+        
+    cleaned_text = clean_pdf_text(text)
+    word_count = len(cleaned_text.split())
+    
+    max_words = 4000
+    if word_count > max_words:
+        cleaned_text = " ".join(cleaned_text.split()[:max_words])
+        
+    client = Groq(api_key=GROQ_API_KEY)
+    
+    prompt = f"""
+Summarize the following study material. 
+Return ONLY a valid JSON object matching exactly this structure, with no markdown, no comments, and no extra text:
+{{
+  "main_summary": "A clear, student-friendly 3-4 sentence summary of the main topics.",
+  "important_points": ["Point 1", "Point 2", "Point 3", "Point 4"],
+  "key_terms": ["Term1", "Term2", "Term3", "Term4"]
+}}
 
-        if len(sentence) < 35:
-            continue
+Rules:
+- Keep original meaning correct.
+- Do not invent facts.
+- Do not remove important definitions.
+- Keep important types, examples, steps, and technical terms.
+- Use simple student-friendly English.
+- If the PDF text is messy, summarize only the clear parts.
 
-        if len(sentence.split()) < 6:
-            continue
+Text to summarize:
+{cleaned_text}
+"""
+    
+    response = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=1000,
+        response_format={"type": "json_object"}
+    )
+    
+    response_content = response.choices[0].message.content
+    result_data = json.loads(response_content)
+    
+    return {
+        "success": True,
+        "source": "groq",
+        "main_summary": result_data.get("main_summary", ""),
+        "important_points": result_data.get("important_points", []),
+        "key_terms": result_data.get("key_terms", []),
+        "word_count": word_count,
+        "message": "Generated using Groq"
+    }
 
-        normalized = sentence.lower()
-
-        if normalized in seen:
-            continue
-
-        seen.add(normalized)
-        cleaned_sentences.append(sentence)
-
-    return cleaned_sentences
-
-
-def clean_words(text: str):
-    words = re.findall(r"\b[a-zA-Z]{3,}\b", text.lower())
-    return [word for word in words if word not in STOPWORDS]
-
-
-def get_top_keywords(text: str, limit: int = 5):
-    words = clean_words(text)
-    counter = Counter(words)
-
-    common_words = [
-        word for word, _ in counter.most_common(limit)
-    ]
-
-    return common_words
-
-
-def score_sentence(sentence: str, word_frequency: Counter, index: int, total_sentences: int):
-    sentence_words = clean_words(sentence)
-
-    if not sentence_words:
-        return 0
-
-    keyword_score = sum(word_frequency.get(word, 0) for word in sentence_words)
-    keyword_score = keyword_score / len(sentence_words)
-
-    position_score = 0
-    if index == 0:
-        position_score += 2
-    elif index < max(2, total_sentences * 0.2):
-        position_score += 1
-
-    study_word_score = 0
-    for word in sentence_words:
-        if word in IMPORTANT_STUDY_WORDS:
-            study_word_score += 1.5
-
-    length_penalty = 0
-    if len(sentence_words) > 35:
-        length_penalty = 1
-
-    return keyword_score + position_score + study_word_score - length_penalty
-
-
-def generate_rule_based_summary(text: str, max_sentences: int = 5):
+def generate_summary(text: str) -> Dict[str, Any]:
     if not text or not text.strip():
         raise ValueError("Text is required for summary generation")
-
-    cleaned_text = clean_text(text)
-    sentences = split_sentences(cleaned_text)
-    word_count = len(cleaned_text.split())
-
-    if not sentences:
-        short_preview = cleaned_text[:500]
-        return {
-            "summary": short_preview,
-            "keyPoints": [short_preview],
-            "sentenceCount": 1,
-            "wordCount": word_count,
-            "message": "Text was too short, so a short preview was returned."
-        }
-
-    words = clean_words(cleaned_text)
-    word_frequency = Counter(words)
-    top_keywords = get_top_keywords(cleaned_text, limit=5)
-
-    scored_sentences = []
-
-    for index, sentence in enumerate(sentences):
-        score = score_sentence(
-            sentence=sentence,
-            word_frequency=word_frequency,
-            index=index,
-            total_sentences=len(sentences)
-        )
-
-        scored_sentences.append((score, index, sentence))
-
-    ranked_sentences = sorted(scored_sentences, key=lambda item: item[0], reverse=True)
-
-    selected = ranked_sentences[:max_sentences]
-
-    # Always keep first useful sentence if it looks introductory
-    first_sentence = sentences[0]
-    if first_sentence not in [item[2] for item in selected] and len(first_sentence.split()) >= 8:
-        selected.append((999, 0, first_sentence))
-
-    selected = sorted(selected, key=lambda item: item[1])
-    selected_sentences = [sentence for _, _, sentence in selected[:max_sentences]]
-
-    if top_keywords:
-        overview = f"This study material mainly discusses {', '.join(top_keywords[:4])}."
-    else:
-        overview = "This study material introduces the main ideas and important concepts from the provided text."
-
-    key_points = selected_sentences[:5]
-
-    summary_text = overview + " " + " ".join(selected_sentences)
-
-    return {
-        "summary": summary_text,
-        "keyPoints": key_points,
-        "sentenceCount": len(sentences),
-        "wordCount": word_count,
-        "message": "Summary generated successfully"
-    }
+        
+    try:
+        return generate_groq_summary(text)
+    except Exception as e:
+        print(f"Groq summary failed: {e}")
+        return generate_tfidf_fallback_summary(text)

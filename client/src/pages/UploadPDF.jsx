@@ -83,6 +83,7 @@ const UploadPDF = () => {
       const data = await extractPdfText(file);
       setAnalysisResult(data);
       sessionStorage.setItem(PDF_STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem("studypulse_extracted_text", data.text);
       toast.success('PDF extracted successfully!');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to extract text from PDF');
@@ -136,7 +137,7 @@ const UploadPDF = () => {
       icon: FileText, 
       color: 'text-blue-500', 
       bg: 'bg-blue-500/10',
-      route: '/smart-notes'
+      route: '/generate-summary'
     },
     { 
       title: 'Create Flashcards', 

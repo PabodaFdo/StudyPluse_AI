@@ -19,8 +19,12 @@ model User {
   focusSessions    FocusSession[]
   academicRecords  AcademicRecord[]
   studyGarden      StudyGarden?
-  growthActivities GrowthActivity[]
-  quests           StudyQuest[]
+  growthActivities    GrowthActivity[]
+  quests              StudyQuest[]
+  savedSummaries      SavedSummary[]
+  savedQuizzes        SavedQuiz[]
+  savedFlashcardDecks SavedFlashcardDeck[]
+  studyMaterials      StudyMaterial[]
 }
 
 model Subject {
@@ -115,4 +119,60 @@ model StudyQuest {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model SavedSummary {
+  id          String   @id @default(cuid())
+  userId      Int
+  title       String
+  sourceType  String
+  sourceTitle String?
+  content     Json
+  wordCount   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavedQuiz {
+  id          String   @id @default(cuid())
+  userId      Int
+  title       String
+  sourceType  String
+  sourceTitle String?
+  questions   Json
+  wordCount   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavedFlashcardDeck {
+  id          String   @id @default(cuid())
+  userId      Int
+  title       String
+  sourceType  String
+  sourceTitle String?
+  flashcards  Json
+  wordCount   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudyMaterial {
+  id            String   @id @default(cuid())
+  userId        Int
+  title         String
+  fileName      String?
+  sourceType    String   @default("pdf")
+  extractedText String   @db.Text
+  wordCount     Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

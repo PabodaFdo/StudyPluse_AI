@@ -6,18 +6,18 @@
 
 <br />
 
-![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![Node.js](https://img.shields.io/badge/Backend-Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)
-![Express](https://img.shields.io/badge/API-Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Prisma](https://img.shields.io/badge/ORM-Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
-![FastAPI](https://img.shields.io/badge/AI_Service-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge\&logo=react\&logoColor=black)
+![Node.js](https://img.shields.io/badge/Backend-Node.js-339933?style=for-the-badge\&logo=node.js\&logoColor=white)
+![Express](https://img.shields.io/badge/API-Express.js-000000?style=for-the-badge\&logo=express\&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=for-the-badge\&logo=postgresql\&logoColor=white)
+![Prisma](https://img.shields.io/badge/ORM-Prisma-2D3748?style=for-the-badge\&logo=prisma\&logoColor=white)
+![FastAPI](https://img.shields.io/badge/AI_Service-FastAPI-009688?style=for-the-badge\&logo=fastapi\&logoColor=white)
 ![Groq](https://img.shields.io/badge/AI-Groq-F55036?style=for-the-badge)
-![Python](https://img.shields.io/badge/ML-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/ML-Python-3776AB?style=for-the-badge\&logo=python\&logoColor=white)
 
 <br />
 
-**StudyPulse AI** is a full-stack student productivity and academic growth platform that helps students manage subjects, organize smart notes, track focus sessions, monitor academic performance, upload PDF study materials, generate AI-powered summaries, create interactive quizzes, generate flashcards, and save all AI-generated learning content inside a personal **My AI Library**.
+**StudyPulse AI** is a full-stack, AI-powered student productivity and academic growth platform. It helps students manage subjects, create smart notes, track focus sessions, monitor academic performance, upload PDF study materials, generate AI summaries, create AI quizzes, generate flashcards, and save generated learning content inside their personal **My AI Library**.
 
 <br />
 
@@ -29,441 +29,273 @@
 
 ## 📌 Table of Contents
 
-- [Project Vision](#-project-vision)
-- [Key Features](#-key-features)
-- [AI/ML Features](#-aiml-features)
-- [Tech Stack](#-tech-stack)
-- [System Architecture](#-system-architecture)
-- [Folder Structure](#-folder-structure)
-- [Getting Started](#-getting-started)
-- [Environment Variables](#-environment-variables)
-- [API Overview](#-api-overview)
-- [AI Study Assistant Features](#-ai-study-assistant-features)
-- [My AI Library](#-my-ai-library)
-- [Database Models](#-database-models)
-- [Testing](#-testing)
-- [Screenshots](#-screenshots)
-- [Project Status](#-current-project-status)
-- [Roadmap](#-roadmap)
-- [Internship Value](#-internship-value)
-- [What I Learned](#-what-i-learned)
-- [Author](#-author)
-- [License](#-license)
+* [Project Vision](#-project-vision)
+* [Key Features](#-key-features)
+* [AI/ML Features](#-aiml-features)
+* [Tech Stack](#-tech-stack)
+* [System Architecture](#-system-architecture)
+* [Folder Structure](#-folder-structure)
+* [Getting Started](#-getting-started)
+* [Demo Login](#-demo-login)
+* [Environment Variables](#-environment-variables)
+* [API Overview](#-api-overview)
+* [AI Study Assistant](#-ai-study-assistant)
+* [My AI Library](#-my-ai-library)
+* [Database Models](#-database-models)
+* [Testing](#-testing)
+* [Screenshots](#-screenshots)
+* [Roadmap](#-roadmap)
+* [Internship Value](#-internship-value)
+* [What I Learned](#-what-i-learned)
+* [CV Highlight](#-cv-highlight)
+* [Author](#-author)
+* [License](#-license)
 
 ---
 
-## 🌟 Project Vision
+## 🚀 Project Vision
 
-Many students struggle with scattered notes, weak revision habits, poor focus consistency, and late awareness of academic risk.
+Many students struggle with scattered notes, inconsistent revision habits, weak focus routines, and late awareness of academic risk.
 
-**StudyPulse AI** solves this by combining study management, productivity tracking, academic progress monitoring, gamification, dashboard analytics, AI/ML-powered learning support, PDF-based study assistance, AI summary generation, interactive quiz generation, flashcard generation, and saved AI learning content into one modern student-focused platform.
+**StudyPulse AI** solves this by combining study management, productivity tracking, academic progress monitoring, gamification, dashboard analytics, and AI-powered learning support into one student-focused platform.
 
-The project is designed as a **Full-Stack + AI/ML portfolio project** to demonstrate practical software engineering, backend development, database design, authentication, machine learning integration, NLP experimentation, AI service architecture, fallback system design, frontend/backend API integration, and user-focused learning workflows.
+The project is designed as a **Full-Stack + AI/ML portfolio project** to demonstrate practical skills in frontend development, backend API development, database design, authentication, AI service integration, PDF processing, machine learning logic, and real-world feature planning.
 
 ---
 
 ## ✨ Key Features
 
-### 🔐 Authentication
+### 🔐 Authentication & Security
 
-- User registration and login.
-- JWT-based authentication.
-- Protected frontend routes.
-- Password hashing with bcrypt.
-- Logout button in the sidebar.
-- Authenticated users can access only their own data.
+* User registration and login.
+* JWT-based authentication.
+* Protected frontend routes.
+* Secure password hashing with bcrypt.
+* Logout button with session clearing.
+* Authenticated users can access only their own data.
 
-### 📘 Subject Management
+### 📘 Subject & Study Management
 
-- Add, update, delete, and manage academic subjects.
-- Store subject name, code, credits, target grade, current standing, status, and description.
-- Connect notes, focus sessions, and academic records to subjects.
+* Add, update, delete, and manage academic subjects.
+* Store subject details such as subject name, code, credits, target grade, and current standing.
+* Connect notes, focus sessions, and academic records with subjects.
 
 ### 📚 Smart Notes
 
-- Create, edit, delete, and organize notes.
-- Group notes by subject.
-- Mark notes as revised.
-- Reward students with Study Garden growth points after revision.
-- Generate AI summaries from selected note content.
-- Use saved Smart Notes as study sources for summary, quiz, and flashcard generation.
+* Create, edit, delete, and organize notes.
+* Group notes by subject.
+* Mark notes as revised.
+* Use saved Smart Notes as sources for AI summaries, quizzes, and flashcards.
 
 ### ⏱️ FocusFlow Timer
 
-- Pomodoro-style focus session tracking.
-- Save focus sessions by subject.
-- Track total study minutes and study hours.
-- Support custom focus/break timer settings.
-- Reward completed focus sessions with growth points.
+* Track focused study sessions.
+* Save focus sessions by subject.
+* Monitor total study time.
+* Support better study consistency through focus tracking.
 
 ### 📊 Academic Records
 
-- Add academic performance records.
-- Store course code, course title, credits, grade, attendance, assignments, quizzes, study hours, missed deadlines, and exam marks.
-- Support academic progress tracking.
-- Used as input for academic risk and subject health features.
+* Add academic performance records.
+* Store attendance, assignment marks, quiz marks, study hours, missed deadlines, and exam marks.
+* Use academic data for risk prediction and subject health analysis.
 
-### 🌱 Study Garden
+### 🌱 Study Garden & Quests
 
-- Gamified student progress system.
-- Students earn growth points through learning actions.
-- Plant stages change based on total growth points.
-- Growth activity history is stored in the database.
-- Supports manual garden actions such as watering and fertilizer.
+* Gamified learning experience.
+* Students earn growth points through study actions.
+* Study quests encourage consistent learning habits.
+* Plant progress motivates students to continue studying.
 
-### 📈 Dashboard
+### 📈 Dashboard Analytics
 
-- View summary of focus sessions, notes, study hours, subjects, academic records, and Study Garden progress.
-- Includes charts for weekly focus overview and subject health.
-- Shows Study Garden preview, academic records summary, and study quest suggestions.
+* View summaries of subjects, notes, focus sessions, academic records, and study progress.
+* Includes visual analytics using charts.
+* Helps students understand their learning behavior.
 
-### 🎯 Study Quests
+### 🌙 Dark/Light Theme
 
-- Daily and weekly study tasks.
-- Designed to improve consistency and study discipline.
-- Rewards students with growth points after completing quests.
-
-### 📄 Saved PDF Study Materials
-
-- Upload study PDFs.
-- Extract PDF text using the FastAPI ML service.
-- Save extracted PDF text permanently in PostgreSQL as **StudyMaterial**.
-- Use saved PDF materials as sources for AI summaries, quizzes, and flashcards.
-- Avoid old localStorage PDF confusion by saving selected material IDs.
-
-### 📝 AI Summary Generator
-
-- Generates student-friendly summaries from saved PDF materials or Smart Notes.
-- Supports long PDF summaries using chunk-based summarization.
-- Shows important study points, main summary, section summaries, and key terms.
-- Uses Groq API as the main AI generator.
-- Uses TF-IDF fallback when Groq is unavailable.
-- Generated summaries can be saved to **My AI Library**.
-
-### 🧠 AI Quiz Generator
-
-- Generates interactive quizzes from saved PDF materials or Smart Notes.
-- Supports 3, 5, or 10 questions.
-- Supports easy, medium, and hard difficulty.
-- Lets users select answers and check correctness.
-- Shows correct/wrong feedback, explanations, and score.
-- Uses Groq API as the main quiz generator.
-- Uses rule-based fallback questions when Groq is unavailable.
-- Generated quizzes can be saved to **My AI Library**.
-
-### 🃏 AI Flashcard Generator
-
-- Generates flashcards from saved PDF materials or Smart Notes.
-- Supports card count and difficulty selection.
-- Provides front/back flashcard view.
-- Supports flip, next, previous, shuffle, and progress tracking.
-- Lets users mark cards as known, still learning, or important.
-- Uses Groq API as the main flashcard generator.
-- Uses fallback flashcard generation when Groq is unavailable.
-- Generated flashcard decks can be saved to **My AI Library**.
-
-### 🗂️ My AI Library
-
-- Stores generated summaries, quizzes, and flashcard decks in PostgreSQL.
-- Shows saved summaries, quizzes, flashcards, and PDF materials in one library page.
-- Supports tabs for each content type.
-- Supports view and delete actions.
-- Supports filtering and searching by title, source, topic, question text, flashcard content, date, and word count/card count/question count.
-- Keeps AI-generated study content available after refresh and across sessions.
+* Supports both dark and light themes.
+* Designed with a modern, responsive user interface.
 
 ---
 
 ## 🤖 AI/ML Features
 
-StudyPulse AI includes a separate **FastAPI ML service** for AI/ML-powered features.
+StudyPulse AI includes a separate **FastAPI AI/ML service** that works together with the Node.js backend.
 
-### ✅ Completed AI/ML Features
+| Feature                   | Method                              | Status      |
+| ------------------------- | ----------------------------------- | ----------- |
+| Academic Risk Prediction  | Machine learning model              | ✅ Completed |
+| Subject Health Score      | Rule-based scoring                  | ✅ Completed |
+| Weak Topic Detection      | Machine learning / rule-based logic | ✅ Completed |
+| PDF Text Extraction       | pdfplumber                          | ✅ Completed |
+| Saved PDF Study Materials | PostgreSQL + Prisma                 | ✅ Completed |
+| AI Summary Generation     | Groq API + fallback logic           | ✅ Completed |
+| Smart Notes AI Summary    | Groq API + fallback logic           | ✅ Completed |
+| AI Quiz Generation        | Groq API + fallback logic           | ✅ Completed |
+| AI Flashcard Generation   | Groq API + fallback logic           | ✅ Completed |
+| My AI Library             | Saved AI content in PostgreSQL      | ✅ Completed |
 
-| Feature | Method | Status |
-|---|---|---|
-| Academic Risk Prediction | RandomForest model | ✅ Completed |
-| Subject Health Score | Rule-based scoring | ✅ Completed |
-| Weak Topic Detection | RandomForest model | ✅ Completed |
-| PDF Text Extraction | pdfplumber | ✅ Completed |
-| Saved PDF Study Materials | PostgreSQL + Prisma | ✅ Completed |
-| Generate Summary | Groq API + TF-IDF fallback | ✅ Completed |
-| Smart Notes AI Summary | Groq API + TF-IDF fallback | ✅ Completed |
-| Interactive Quiz Generator | Groq API + rule-based fallback | ✅ Completed |
-| Flashcard Generator | Groq API + fallback generation | ✅ Completed |
-| My AI Library | PostgreSQL saved AI content | ✅ Completed |
+### 📄 PDF Text Extraction
 
-### 🧠 Academic Risk Prediction
+Students can upload PDF study materials. The FastAPI service extracts text from the PDF using `pdfplumber`, and the extracted text is saved as a **Study Material** in PostgreSQL.
 
-Predicts whether a student may be at low, medium, or high academic risk using study and performance-related factors.
+Saved PDF materials can be reused for:
 
-Inputs include:
-
-```txt
-attendancePercentage
-assignmentAverage
-quizAverage
-studyHoursPerWeek
-missedDeadlines
-focusSessionsCompleted
-previousExamMark
-```
-
-Output includes:
-
-```txt
-riskLevel
-riskScore
-recommendations
-```
-
-### 📊 Subject Health Score
-
-Calculates a subject-level health score using academic and study behavior inputs. It helps students understand whether a subject is healthy, moderate, or at risk.
-
-### 🎯 Weak Topic Detection
-
-Detects whether a study topic is strong, moderate, or weak using topic-level study performance data.
-
-### 📄 PDF Text Extraction and Saved Study Materials
-
-Extracts text from uploaded PDF study materials using `pdfplumber`.
-
-After extraction, the PDF text is saved in PostgreSQL as a **StudyMaterial** record. This makes the extracted material reusable across Summary, Quiz, and Flashcard pages.
-
-The saved PDF material can be used for:
-
-```txt
-Summary generation
-Quiz generation
-Flashcard generation
+```text
+AI summary generation
+AI quiz generation
+AI flashcard generation
 Study material preview
-My AI Library PDF material view
+My AI Library
 ```
 
-### 📝 Generate Summary
+### 📝 AI Summary Generation
 
-The Generate Summary feature uses:
+The summary generator creates structured summaries from saved PDF materials or Smart Notes.
 
-```txt
-Groq API = main AI summary generator
-TF-IDF extractive summarization = fallback
+It can return:
+
+```text
+Main summary
+Important points
+Key terms
+Section summaries
+Word count
 ```
 
-The system returns important study points, main summary, section summaries, key terms, word count, and an AI safety note.
+### 🧠 AI Quiz Generation
 
-For long PDF files, StudyPulse uses a chunk-based approach:
+The quiz generator creates interactive quizzes from saved PDF materials or Smart Notes.
 
-```txt
-Saved PDF / Smart Note text
-↓
-Clean text
-↓
-Split text into chunks
-↓
-Summarize each chunk
-↓
-Merge important points
-↓
-Generate final summary
-↓
-Display section summaries
-↓
+It supports:
+
+```text
+Multiple-choice questions
+Difficulty selection
+Answer selection
+Correct/wrong feedback
+Answer explanations
+Score tracking
 Save to My AI Library
 ```
 
-### 🧠 AI Quiz Generator
+### 🃏 AI Flashcard Generation
 
-The Quiz Generator creates interactive quizzes from saved PDF materials or Smart Notes.
+The flashcard generator creates active recall flashcards from saved PDF materials or Smart Notes.
 
-It uses:
+It supports:
 
-```txt
-Groq API = main quiz generator
-Rule-based fallback = backup quiz generator
+```text
+Front/back flashcards
+Difficulty selection
+Category labels
+Flip interaction
+Next/previous navigation
+Shuffle mode
+Known / still learning / important status
+Save to My AI Library
 ```
 
-### 🃏 AI Flashcard Generator
+### 🛡️ Fallback Support
 
-The Flashcard Generator creates revision cards from saved PDF materials or Smart Notes.
-
-It uses:
-
-```txt
-Groq API = main flashcard generator
-Rule-based fallback = backup flashcard generator
-```
+If the Groq API is unavailable, rate-limited, or fails, the system uses fallback logic for summaries, quizzes, and flashcards. This helps the app continue working even when the external AI service is not available.
 
 ---
 
-## 🧩 Tech Stack
+## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React, Vite, Tailwind CSS |
-| UI/UX | Framer Motion, Lucide React, Recharts, React Hot Toast |
-| Backend | Node.js, Express.js |
-| Database | PostgreSQL |
-| ORM | Prisma |
-| Authentication | JWT, bcryptjs |
-| API Communication | Axios |
-| AI/ML Service | Python, FastAPI |
-| ML Libraries | scikit-learn, pandas, NumPy, joblib |
-| PDF Processing | pdfplumber |
-| AI Summary | Groq API |
-| AI Quiz Generation | Groq API |
-| AI Flashcard Generation | Groq API |
-| Fallback Summary | TF-IDF using scikit-learn |
-| Fallback Quiz | Rule-based short-answer generation |
-| Fallback Flashcards | Rule-based flashcard generation |
-| API Testing | Postman, FastAPI Swagger |
-| Development Tools | VS Code / Antigravity, Git, GitHub |
-| Deployment Plan | Vercel, Render/Railway, Supabase/Neon |
+| Layer             | Technologies                                           |
+| ----------------- | ------------------------------------------------------ |
+| Frontend          | React, Vite, Tailwind CSS, React Router                |
+| UI/UX             | Framer Motion, Lucide React, Recharts, React Hot Toast |
+| Backend           | Node.js, Express.js                                    |
+| Database          | PostgreSQL                                             |
+| ORM               | Prisma                                                 |
+| Authentication    | JWT, bcrypt                                            |
+| API Communication | Axios                                                  |
+| AI/ML Service     | Python, FastAPI                                        |
+| AI/ML Libraries   | scikit-learn, pandas, NumPy, joblib                    |
+| PDF Processing    | pdfplumber                                             |
+| AI Integration    | Groq API                                               |
+| Testing Tools     | Postman, FastAPI Swagger                               |
+| Development Tools | VS Code / Antigravity, Git, GitHub                     |
 
 ---
 
 ## 🏗️ System Architecture
 
-```txt
+StudyPulse AI follows a multi-service architecture:
+
+```text
 React Frontend
-│
-├── Landing Page
-├── Dashboard
-├── Subjects
-├── Smart Notes
-├── Focus Timer
-├── Study Garden
-├── Academic Records
-├── Upload PDF
-├── Generate Summary
-├── Quiz Generator
-├── Flashcards
-└── My AI Library
-        │
-        ▼
-Node.js + Express Backend
-│
-├── JWT Authentication
-├── Protected REST APIs
-├── Business Logic
-├── Study Garden Points
-├── Dashboard Analytics
-├── Study Material Routes
-├── AI Library Routes
-├── Summary Proxy Route
-├── Quiz Proxy Route
-├── Flashcard Proxy Route
-└── Prisma Database Access
-        │
-        ▼
+      ↓
+Node.js Express Backend
+      ↓
+FastAPI AI/ML Service
+      ↓
 PostgreSQL Database
-│
-├── Users
-├── Subjects
-├── Notes
-├── Focus Sessions
-├── Academic Records
-├── Study Gardens
-├── Growth Activities
-├── Study Quests
-├── Study Materials
-├── Saved Summaries
-├── Saved Quizzes
-└── Saved Flashcard Decks
-        │
-        ▼
-Python FastAPI AI/ML Service
-│
-├── Academic Risk Prediction
-├── Subject Health Score
-├── Weak Topic Detection
-├── PDF Text Extraction
-├── Generate Summary
-├── Generate Quiz
-└── Generate Flashcards
 ```
+
+The React frontend does **not** directly call the FastAPI service.
+
+Instead:
+
+```text
+React sends request to Node.js backend
+Node.js backend validates and forwards request to FastAPI
+FastAPI returns AI/ML result
+Node.js backend sends result back to React
+```
+
+This keeps the architecture cleaner and safer because API keys and AI service logic are not exposed to the frontend.
 
 ---
 
-## 📁 Folder Structure
+## 📂 Folder Structure
 
-```txt
+```text
 StudyPluse_AI/
-├── client/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Input.jsx
-│   │   │   ├── Modal.jsx
-│   │   │   ├── MobileNav.jsx
-│   │   │   └── Sidebar.jsx
-│   │   ├── pages/
-│   │   │   ├── AILibrary.jsx
-│   │   │   ├── Flashcards.jsx
-│   │   │   ├── GenerateSummary.jsx
-│   │   │   ├── QuizGenerator.jsx
-│   │   │   ├── SmartNotes.jsx
-│   │   │   └── UploadPDF.jsx
-│   │   ├── routes/
-│   │   │   └── AppRoutes.jsx
-│   │   ├── services/
-│   │   │   ├── aiLibrary.service.js
-│   │   │   ├── flashcard.service.js
-│   │   │   ├── quiz.service.js
-│   │   │   ├── studyMaterial.service.js
-│   │   │   └── summary.service.js
-│   │   └── main.jsx
-│   └── package.json
-│
-├── server/
-│   ├── prisma/
-│   │   ├── migrations/
-│   │   ├── schema.prisma
-│   │   └── seed.js
-│   ├── src/
-│   │   ├── controllers/
-│   │   │   ├── aiLibrary.controller.js
-│   │   │   ├── flashcard.controller.js
-│   │   │   ├── quiz.controller.js
-│   │   │   ├── studyMaterial.controller.js
-│   │   │   └── summary.controller.js
-│   │   ├── routes/
-│   │   │   ├── aiLibrary.routes.js
-│   │   │   ├── flashcard.routes.js
-│   │   │   ├── quiz.routes.js
-│   │   │   ├── studyMaterial.routes.js
-│   │   │   └── summary.routes.js
-│   │   ├── services/
-│   │   │   ├── aiLibrary.service.js
-│   │   │   ├── flashcard.service.js
-│   │   │   ├── quiz.service.js
-│   │   │   ├── studyMaterial.service.js
-│   │   │   └── summary.service.js
-│   │   ├── app.js
-│   │   └── server.js
-│   └── package.json
-│
-├── ml-service/
-│   ├── app/
-│   │   ├── services/
-│   │   │   ├── flashcard_service.py
-│   │   │   ├── pdf_service.py
-│   │   │   ├── quiz_service.py
-│   │   │   ├── risk_service.py
-│   │   │   ├── subject_health_service.py
-│   │   │   ├── summary_service.py
-│   │   │   └── weak_topic_service.py
-│   │   ├── main.py
-│   │   ├── schemas.py
-│   │   └── utils.py
-│   ├── .env.example
-│   └── requirements.txt
-│
-├── notebooks/
-│   └── StudyPulse_HuggingFace_Summary_Test.ipynb
-├── docs/
-│   └── screenshots/
+├── client/        # React + Vite frontend
+├── server/        # Node.js + Express backend
+├── ml-service/    # FastAPI AI/ML service
+├── notebooks/     # Colab / Hugging Face experiment notebooks
+├── docs/          # Screenshots and documentation
 ├── README.md
 ├── LICENSE
 └── .gitignore
+```
+
+### Main Frontend Files
+
+```text
+client/src/pages/GenerateSummary.jsx
+client/src/pages/QuizGenerator.jsx
+client/src/pages/Flashcards.jsx
+client/src/pages/UploadPDF.jsx
+client/src/pages/AILibrary.jsx
+client/src/components/Sidebar.jsx
+client/src/routes/AppRoutes.jsx
+```
+
+### Main Backend Files
+
+```text
+server/src/controllers/
+server/src/routes/
+server/src/services/
+server/prisma/schema.prisma
+server/src/app.js
+server/src/server.js
+```
+
+### Main AI/ML Service Files
+
+```text
+ml-service/app/main.py
+ml-service/app/schemas.py
+ml-service/app/services/
 ```
 
 ---
@@ -472,7 +304,9 @@ StudyPluse_AI/
 
 ### Prerequisites
 
-```txt
+Install these before running the project:
+
+```text
 Node.js 18+
 npm
 PostgreSQL
@@ -481,6 +315,8 @@ Git
 Postman
 ```
 
+---
+
 ### 1. Clone the Repository
 
 ```bash
@@ -488,30 +324,17 @@ git clone https://github.com/PabodaFdo/StudyPluse_AI.git
 cd StudyPluse_AI
 ```
 
-### 2. Run the Backend
+---
+
+### 2. Backend Setup
 
 ```bash
 cd server
 npm install
-```
-
-Create a `.env` file inside the `server` folder:
-
-```env
-PORT=5000
-DATABASE_URL="postgresql://postgres:your_password@localhost:5432/studypulse_ai?schema=public"
-JWT_SECRET="change_this_secret"
-JWT_EXPIRES_IN="7d"
-CLIENT_URL="http://localhost:5173"
-ML_SERVICE_URL="http://localhost:8000"
-```
-
-Run Prisma commands:
-
-```bash
 npx prisma generate
 npx prisma migrate dev
 npx prisma db seed
+npm run dev
 ```
 
 If PowerShell blocks `npx`, use:
@@ -522,19 +345,15 @@ npx.cmd prisma migrate dev
 npx.cmd prisma db seed
 ```
 
-Start the backend:
-
-```bash
-npm run dev
-```
-
 Backend runs at:
 
-```txt
+```text
 http://localhost:5000
 ```
 
-### 3. Run the Frontend
+---
+
+### 3. Frontend Setup
 
 ```bash
 cd client
@@ -544,51 +363,31 @@ npm run dev
 
 Frontend runs at:
 
-```txt
+```text
 http://localhost:5173
 ```
 
-### 4. Run the FastAPI ML Service
+---
+
+### 4. FastAPI AI/ML Service Setup
 
 ```bash
 cd ml-service
 python -m venv venv
-```
-
-For Windows PowerShell:
-
-```bash
 .\venv\Scripts\activate
-```
-
-Install dependencies:
-
-```bash
 pip install -r requirements.txt
-```
-
-Create a `.env` file inside `ml-service`:
-
-```env
-GROQ_API_KEY=your_groq_api_key_here
-GROQ_MODEL=llama-3.1-8b-instant
-```
-
-Start FastAPI:
-
-```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
 FastAPI runs at:
 
-```txt
+```text
 http://localhost:8000
 ```
 
-FastAPI Swagger docs:
+Swagger documentation:
 
-```txt
+```text
 http://localhost:8000/docs
 ```
 
@@ -596,16 +395,18 @@ http://localhost:8000/docs
 
 ## 🔐 Demo Login
 
-```txt
+```text
 Email: demo@studypulse.ai
 Password: password123
 ```
 
 ---
 
-## 🔑 Environment Variables
+## 🔐 Environment Variables
 
-### Server `.env`
+Create `.env` files inside both the `server` and `ml-service` folders.
+
+### `server/.env`
 
 ```env
 PORT=5000
@@ -616,47 +417,79 @@ CLIENT_URL="http://localhost:5173"
 ML_SERVICE_URL="http://localhost:8000"
 ```
 
-### ML Service `.env`
+### `ml-service/.env`
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=llama-3.1-8b-instant
 ```
 
-### Important Security Note
+### Security Note
 
-Do not commit real `.env` files to GitHub.
+Never commit `.env` files to GitHub.
 
 The Groq API key must stay inside:
 
-```txt
+```text
 ml-service/.env
 ```
 
 It should never be added to the React frontend.
 
-React calls the Node backend only. The Node backend calls the FastAPI ML service.
-
 ---
 
-## 📡 API Overview
+## 🔌 API Overview
 
-### Node + Express APIs
+### Node.js Express Endpoints
 
-```txt
+#### Auth
+
+```text
 POST /api/auth/register
 POST /api/auth/login
 GET  /api/auth/me
+```
 
+#### Subjects
+
+```text
+GET    /api/subjects
+POST   /api/subjects
+GET    /api/subjects/:id
+PUT    /api/subjects/:id
+DELETE /api/subjects/:id
+```
+
+#### Notes
+
+```text
+GET    /api/notes
+POST   /api/notes
+GET    /api/notes/:id
+PUT    /api/notes/:id
+DELETE /api/notes/:id
+```
+
+#### AI Generation
+
+```text
 POST /api/summary/generate
 POST /api/quiz/generate
 POST /api/flashcards/generate
+```
 
+#### Study Materials
+
+```text
 POST   /api/study-materials
 GET    /api/study-materials
 GET    /api/study-materials/:id
 DELETE /api/study-materials/:id
+```
 
+#### My AI Library
+
+```text
 POST   /api/ai-library/summaries
 GET    /api/ai-library/summaries
 GET    /api/ai-library/summaries/:id
@@ -673,187 +506,127 @@ GET    /api/ai-library/flashcards/:id
 DELETE /api/ai-library/flashcards/:id
 ```
 
-### FastAPI ML Service Endpoints
+---
 
-```txt
+### FastAPI AI/ML Endpoints
+
+```text
 GET  /health
 POST /predict-risk
 POST /subject-health
-POST /weak-topics
-POST /extract-pdf
+POST /predict-weak-topic
+POST /extract-pdf-text
 POST /generate-summary
 POST /generate-quiz
 POST /generate-flashcards
 ```
 
-### Generate Summary Request
-
-```json
-{
-  "text": "extracted PDF or note text here"
-}
-```
-
-### Generate Quiz Request
-
-```json
-{
-  "text": "extracted PDF or note text here",
-  "question_count": 5,
-  "difficulty": "medium"
-}
-```
-
-### Generate Flashcards Request
-
-```json
-{
-  "text": "extracted PDF or note text here",
-  "card_count": 10,
-  "difficulty": "medium"
-}
-```
-
 ---
 
-## 🧠 AI Study Assistant Features
+## 🧠 AI Study Assistant
 
-### AI Summary Experiment and Final Decision
+### Summary Flow
 
-The Generate Summary feature went through multiple experiments before the final implementation.
-
-#### Google Colab Experiment Notebook
-
-The Hugging Face summarization experiments were tested in Google Colab before implementation.
-
-Notebook location:
-
-```txt
-notebooks/StudyPulse_HuggingFace_Summary_Test.ipynb
+```text
+Saved PDF Material / Smart Note
+        ↓
+React Generate Summary Page
+        ↓
+Node.js /api/summary/generate
+        ↓
+FastAPI /generate-summary
+        ↓
+Groq AI or fallback summary logic
+        ↓
+Display summary in React
+        ↓
+Save summary to My AI Library
 ```
 
-#### Tested Approaches
+### Quiz Flow
 
-| Approach | Result | Decision |
-|---|---|---|
-| `sshleifer/distilbart-cnn-12-6` | Generated short summaries but missed some study details | Not selected as final main method |
-| `google/flan-t5-base` | Gave very general output for some tests | Not selected |
-| `facebook/bart-large-cnn` | Better than DistilBART but sometimes missed details or mixed meanings | Useful for learning, not selected as final main method |
-| TF-IDF extractive summarization | More reliable because it selects important original sentences | Selected as fallback |
-| Groq API | Produced better instruction-based student summaries | Selected as main AI summary method |
-
-#### Final Decision
-
-```txt
-Groq API = Main AI summary generator
-TF-IDF extractive summarization = Fallback method
-```
-
-### AI Quiz Generator
-
-```txt
-Saved PDF / Smart Note
-↓
-Quiz Generator Page
-↓
+```text
+Saved PDF Material / Smart Note
+        ↓
+React Quiz Generator Page
+        ↓
 Node.js /api/quiz/generate
-↓
+        ↓
 FastAPI /generate-quiz
-↓
-Try Groq Quiz Generation
-↓
-If Groq works: return MCQ questions with options, correct answer, and explanation
-↓
-If Groq fails: return fallback short-answer questions
-↓
+        ↓
+Groq AI or fallback quiz logic
+        ↓
 Display interactive quiz in React
-↓
+        ↓
 Save quiz to My AI Library
 ```
 
-### AI Flashcard Generator
+### Flashcard Flow
 
-```txt
-Saved PDF / Smart Note
-↓
-Flashcards Page
-↓
+```text
+Saved PDF Material / Smart Note
+        ↓
+React Flashcards Page
+        ↓
 Node.js /api/flashcards/generate
-↓
+        ↓
 FastAPI /generate-flashcards
-↓
-Try Groq Flashcard Generation
-↓
-If Groq works: return flashcards with front, back, category, and difficulty
-↓
-If Groq fails: return fallback flashcards from important sentences
-↓
-Display interactive flashcard deck in React
-↓
+        ↓
+Groq AI or fallback flashcard logic
+        ↓
+Display interactive flashcards in React
+        ↓
 Save flashcard deck to My AI Library
 ```
 
 ---
 
-## 🗂️ My AI Library
+## 📚 My AI Library
 
-My AI Library stores AI-generated study content permanently in PostgreSQL.
+**My AI Library** is a centralized study content library where students can save and manage generated AI learning materials.
 
-### Saved Content Types
+Saved content includes:
 
-```txt
+```text
 Saved Summaries
 Saved Quizzes
 Saved Flashcard Decks
-Saved PDF Materials
+Saved PDF Study Materials
 ```
 
-### Library Features
+### My AI Library Features
 
-```txt
+```text
 View saved summaries
 View saved quizzes
 View saved flashcard decks
 View saved PDF materials
 Delete saved items
+Search saved content
 Filter by date
-Search by title/source/topic/content
-Sort by newest, oldest, title, word count, question count, or card count
+Sort saved content
 Dark/light theme support
+```
+
+### Filter Examples
+
+```text
+Search summaries by title, source, topic, or key term
+Search quizzes by title, source, or question text
+Search flashcards by title, source, category, front, or back
+Search PDF materials by title, file name, or extracted content
+Filter items by today, last 7 days, last 30 days, or this month
 ```
 
 ---
 
-## 🌱 Study Garden Points System
+## 💾 Database Models
 
-| Action | Growth Points |
-|---|---:|
-| Create note | +3 |
-| Mark note as revised | +5 |
-| Complete focus session | +10 |
-| Add academic record | +3 |
-| Water plant | +15 |
-| Apply fertilizer | +40 |
-| Complete study quest | Custom reward |
+The PostgreSQL database is managed using Prisma ORM.
 
-### Plant Growth Stages
+Main models include:
 
-| Points | Stage |
-|---:|---|
-| 0–20 | Seed |
-| 21–50 | Small Sprout |
-| 51–100 | Growing Plant |
-| 101–160 | Healthy Plant |
-| 161–230 | Flower Buds |
-| 231+ | Blooming Flowers |
-
----
-
-## 🗄️ Database Models
-
-Main models:
-
-```txt
+```text
 User
 Subject
 Note
@@ -870,147 +643,84 @@ SavedFlashcardDeck
 
 ### AI Library Models
 
-```txt
-StudyMaterial
-- Stores extracted PDF text.
-- Belongs to a logged-in user.
-- Used as a source for Summary, Quiz, and Flashcard generation.
+#### StudyMaterial
 
-SavedSummary
-- Stores generated AI summaries.
-- Includes summary content, source type, source title, and word count.
+Stores extracted PDF text and allows students to reuse uploaded PDF content for AI tools.
 
-SavedQuiz
-- Stores generated quiz questions.
-- Includes questions, options, correct answers, explanations, source type, and word count.
+#### SavedSummary
 
-SavedFlashcardDeck
-- Stores generated flashcards.
-- Includes front/back cards, category, difficulty, source type, and word count.
-```
+Stores generated AI summaries with source type, source title, content, and word count.
 
----
+#### SavedQuiz
 
-## 📊 Current Project Status
+Stores generated quiz questions, options, correct answers, explanations, source type, and word count.
 
-| Module | Status |
-|---|---|
-| Frontend UI | ✅ Completed |
-| Light/Dark Theme | ✅ Completed |
-| Backend Structure | ✅ Completed |
-| PostgreSQL + Prisma | ✅ Completed |
-| JWT Authentication Backend | ✅ Completed |
-| Frontend Authentication Integration | ✅ Completed |
-| Protected Routes | ✅ Completed |
-| Logout Button | ✅ Completed |
-| Subjects API | ✅ Completed |
-| Subjects Frontend Integration | ✅ Completed |
-| Notes API | ✅ Completed |
-| Smart Notes Frontend Integration | ✅ Completed |
-| Focus Sessions API | ✅ Completed |
-| Focus Timer Frontend Integration | ✅ Completed |
-| Academic Records API | ✅ Completed |
-| Academic Records Frontend Integration | ✅ Completed |
-| Study Garden API | ✅ Completed |
-| Study Garden Frontend Integration | ✅ Completed |
-| Dashboard API | ✅ Completed |
-| Dashboard Frontend Integration | ✅ Completed |
-| Study Quests Integration | ✅ Completed |
-| FastAPI ML Service | ✅ Completed |
-| Academic Risk Prediction | ✅ Completed |
-| Subject Health Score | ✅ Completed |
-| Weak Topic Detection | ✅ Completed |
-| PDF Text Extraction | ✅ Completed |
-| Saved PDF Materials | ✅ Completed |
-| AI Summary Generator | ✅ Completed |
-| AI Quiz Generator | ✅ Completed |
-| AI Flashcard Generator | ✅ Completed |
-| Save Summaries to Database | ✅ Completed |
-| Save Quizzes to Database | ✅ Completed |
-| Save Flashcards to Database | ✅ Completed |
-| My AI Library Page | ✅ Completed |
-| My AI Library Filters | ✅ Completed |
-| Deployment | 🟡 Planned |
+#### SavedFlashcardDeck
+
+Stores generated flashcard decks with front/back cards, categories, difficulty, source type, and word count.
 
 ---
 
 ## 🧪 Testing
 
-### Backend API Testing
+### Backend Testing
 
-Backend APIs were tested using Postman.
+The Node.js backend APIs were tested using Postman.
 
-Tested areas:
+Tested areas include:
 
-```txt
+```text
 Authentication
 Protected routes
 Subject CRUD
 Notes CRUD
-Focus session creation
-Academic record creation
-Study Garden point updates
-Growth activity logs
-Dashboard summary
-Dashboard chart data
-Study material creation/list/detail/delete
-AI Library summary save/list/detail/delete
-AI Library quiz save/list/detail/delete
-AI Library flashcard save/list/detail/delete
-Summary generation route
-Quiz generation route
-Flashcard generation route
+Study materials
+AI Library summaries
+AI Library quizzes
+AI Library flashcards
+Summary generation
+Quiz generation
+Flashcard generation
 ```
 
-### FastAPI ML Service Testing
+### FastAPI Testing
 
 FastAPI endpoints were tested using Swagger UI.
 
-Tested areas:
+Swagger URL:
 
-```txt
+```text
+http://localhost:8000/docs
+```
+
+Tested areas include:
+
+```text
 Academic risk prediction
 Subject health score
 Weak topic detection
 PDF text extraction
-Groq summary generation
-TF-IDF fallback summary
-Groq quiz generation
-Rule-based fallback quiz
-Groq flashcard generation
-Rule-based fallback flashcards
+Summary generation
+Quiz generation
+Flashcard generation
+Fallback responses
 ```
 
 ### Frontend Testing
 
-Frontend testing areas:
+Frontend testing covered:
 
-```txt
-Login and register flow
-Logout flow
+```text
+Login and logout
 Protected route access
-Subjects page API integration
-Smart Notes API integration
-Smart Notes AI summary generation
-Focus Timer save flow
-Academic Records CRUD
-Study Garden growth points
-Dashboard summary cards
-PDF upload and text extraction
-Saving extracted PDF text to PostgreSQL
-Saved PDF source dropdown
-Generate Summary page
-Save Summary modal and My AI Library save flow
-AI Quiz Generator page
-Answer selection and checking
-Quiz score update
-Save Quiz modal and My AI Library save flow
-Flashcard Generator page
-Flashcard flip/navigation/status tracking
-Save Flashcards modal and My AI Library save flow
-My AI Library tabs
+PDF upload and extraction
+Saved PDF materials dropdown
+Summary generation
+Quiz generation
+Flashcard generation
+Saving generated content
 My AI Library view/delete actions
-My AI Library filters and sorting
+My AI Library filters
 Dark/light theme readability
 ```
 
@@ -1020,48 +730,29 @@ Dark/light theme readability
 
 Add screenshots inside:
 
-```txt
+```text
 docs/screenshots/
 ```
 
-Suggested screenshots:
+Recommended screenshots:
 
-```txt
-Landing Page
-Login Page
-Dashboard
-Subjects Page
-Smart Notes
-Smart Notes AI Summary
-Focus Timer
-Study Garden
-Academic Records
-Study Quests
-PDF Text Extraction
-Saved PDF Materials Dropdown
-Generate Summary Page
-Summary Save Modal
-Quiz Generator Setup
-Generated Quiz Questions
-Quiz Answer Check
-Flashcard Generator
-Flashcard Save Modal
-My AI Library Summaries
-My AI Library Quizzes
-My AI Library Flashcards
-My AI Library PDF Materials
-My AI Library Filters
-FastAPI Swagger
+```text
+dashboard.png
+upload-pdf-extraction.png
+generate-summary-page.png
+quiz-generator-page.png
+flashcards-page.png
+my-ai-library.png
 ```
 
-Example README image format:
+Example:
 
 ```md
 ![Dashboard](docs/screenshots/dashboard.png)
 
-![PDF Text Extraction](docs/screenshots/upload-pdf-extraction.png)
+![Upload PDF](docs/screenshots/upload-pdf-extraction.png)
 
-![Generate Summary Page](docs/screenshots/generate-summary-page.png)
+![Generate Summary](docs/screenshots/generate-summary-page.png)
 
 ![Quiz Generator](docs/screenshots/quiz-generator-page.png)
 
@@ -1070,121 +761,54 @@ Example README image format:
 ![My AI Library](docs/screenshots/my-ai-library.png)
 ```
 
+If screenshots are not added yet, this section can be updated later.
+
 ---
 
-## 🛣️ Roadmap
+## 📌 Roadmap
 
-### Version 1 — Full-Stack MVP
-
-- [x] Frontend UI
-- [x] Light/Dark theme
-- [x] Backend setup
-- [x] PostgreSQL database
-- [x] Prisma schema and migrations
-- [x] JWT authentication
-- [x] Protected routes
-- [x] Logout button
-- [x] Subjects CRUD
-- [x] Smart Notes CRUD
-- [x] Focus session tracking
-- [x] Academic records tracking
-- [x] Study Garden growth points
-- [x] Dashboard summary and charts
-- [x] Frontend/backend API integration
-- [x] Study Quests frontend/backend integration
-- [ ] Final responsive UI polish
-- [ ] Add final screenshots to README
-
-### Version 2 — AI/ML Service
-
-- [x] Create FastAPI ML service
-- [x] Add ML service health endpoint
-- [x] Add academic risk prediction model
-- [x] Add subject health score
-- [x] Add weak topic detection
-- [x] Add PDF text extraction
-- [x] Add Generate Summary endpoint
-- [x] Add Groq summary integration
-- [x] Add TF-IDF fallback summary
-- [x] Connect Express backend to summary endpoint
-- [x] Connect frontend Generate Summary page
-- [x] Connect Smart Notes AI summary
-- [x] Add Generate Quiz endpoint
-- [x] Add Groq quiz generation
-- [x] Add quiz fallback system
-- [x] Connect Express backend to quiz endpoint
-- [x] Connect frontend Quiz Generator page
-- [x] Add Generate Flashcards endpoint
-- [x] Add Groq flashcard generation
-- [x] Add flashcard fallback system
-- [x] Connect Express backend to flashcard endpoint
-- [x] Connect frontend Flashcards page
-
-### Version 3 — AI Study Assistant
-
-- [x] PDF upload
-- [x] PDF text extraction
-- [x] Save extracted PDF text to database
-- [x] Saved PDF materials source selection
-- [x] Summary generation backend endpoint
-- [x] Summary generation frontend integration
-- [x] Smart Notes AI summary integration
-- [x] Quiz generation backend endpoint
-- [x] Quiz generation frontend integration
-- [x] Interactive quiz mode
-- [x] Flashcard generation
-- [x] Interactive flashcard mode
-- [x] Save generated summaries to database
-- [x] Save generated quizzes to database
-- [x] Save flashcards to database
-- [x] My AI Library page
-- [x] My AI Library filters
-
-### Version 4 — Advanced Features
-
-- [ ] Mood check-in analytics
-- [ ] Burnout warning
-- [ ] Revision reminders
-- [ ] Flower/badge collection
-- [ ] Report export
-- [ ] Admin dashboard
-- [ ] Full deployment
+* [x] Full-stack MVP
+* [x] Authentication and protected routes
+* [x] Dashboard and study management features
+* [x] FastAPI AI/ML service
+* [x] PDF text extraction
+* [x] AI summary generation
+* [x] AI quiz generation
+* [x] AI flashcard generation
+* [x] Saved PDF study materials
+* [x] My AI Library
+* [ ] Final responsive UI polish
+* [ ] Deployment
 
 ---
 
 ## 💼 Internship Value
 
-This project demonstrates:
+This project demonstrates practical skills in:
 
-```txt
+```text
 Full-stack application development
 REST API development
 JWT authentication
 Protected route handling
-Logout/session handling
-Database design with Prisma
-PostgreSQL integration
-Frontend dashboard design
-API integration with Axios
-Gamification logic
-Study analytics
-Postman API testing
-FastAPI ML microservice development
-scikit-learn model integration
-RandomForest model usage
+Logout/session management
+PostgreSQL database design
+Prisma ORM
+React frontend development
+Tailwind CSS UI design
+Dashboard analytics
+AI/ML service integration
+FastAPI microservice development
 PDF text extraction
-NLP experimentation
-Hugging Face model testing
 Groq API integration
 Fallback architecture
 AI summary generation
-Interactive AI quiz generation
+AI quiz generation
 AI flashcard generation
 Saved AI content management
 Search/filter/sort UI logic
-Frontend state management
-Real-world AI feature design
-Full-stack AI system integration
+Postman and Swagger testing
+Git and GitHub workflow
 ```
 
 ---
@@ -1193,46 +817,36 @@ Full-stack AI system integration
 
 Through this project, I practiced:
 
-```txt
+```text
 Building a full-stack React + Express application
 Designing database models with Prisma
 Connecting PostgreSQL with a backend API
 Creating protected routes with JWT
-Building dashboard analytics
-Designing gamification logic
-Creating a separate FastAPI ML service
-Training and using RandomForest models
+Building reusable frontend pages and services
+Creating a separate FastAPI AI/ML service
 Using pdfplumber for PDF text extraction
-Testing Hugging Face summarization models in Colab
-Understanding limitations of AI summarization
-Using Groq API for instruction-based AI summary generation
-Creating a TF-IDF fallback system
-Designing chunk-based summary generation for long PDFs
-Creating AI-generated quizzes from study material
-Creating a rule-based quiz fallback system
-Creating AI-generated flashcards from study material
+Integrating Groq API for AI-powered learning tools
+Creating fallback logic for AI features
 Saving extracted PDF text permanently in PostgreSQL
-Saving AI-generated summaries, quizzes, and flashcards
+Saving generated summaries, quizzes, and flashcards
 Building a searchable My AI Library page
-Connecting FastAPI AI services through an Express backend
-Testing both success and failure paths
 Improving dark/light theme readability
-Handling React rendering issues safely
-Documenting project decisions for portfolio and interview explanation
+Debugging frontend and backend integration issues
+Documenting a full-stack AI project for portfolio use
 ```
 
 ---
 
-## 📌 CV Bullet
+## 📌 CV Highlight
 
-Built StudyPulse AI, a full-stack student productivity and academic growth platform with JWT authentication, subject and note management, focus session tracking, academic records, dashboard analytics, and a gamified Study Garden system using React, Express.js, PostgreSQL, Prisma, Node.js, and FastAPI. Integrated AI/ML features including academic risk prediction, subject health scoring, weak topic detection, PDF text extraction, AI-powered summary generation using Groq with a TF-IDF fallback system, interactive AI quiz generation, AI flashcard generation, saved PDF study materials, and a searchable My AI Library for storing generated summaries, quizzes, and flashcard decks.
+Built **StudyPulse AI**, a full-stack AI-powered student productivity platform using React, Express.js, PostgreSQL, Prisma, and FastAPI. Integrated AI/ML features including academic risk prediction, subject health scoring, weak topic detection, PDF text extraction, Groq-powered summary, quiz, and flashcard generation, saved PDF study materials, and a searchable My AI Library for storing generated learning content.
 
 ---
 
 ## 👩‍💻 Author
 
-**Paboda Fernando**  
-BSc (Hons) Information Technology Undergraduate  
+**Paboda Fernando**
+BSc (Hons) Information Technology Undergraduate
 Sri Lanka Institute of Information Technology
 
 ---

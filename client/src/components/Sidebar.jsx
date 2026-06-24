@@ -1,11 +1,12 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen, FileText, Upload, BrainCircuit, HelpCircle,
   Layers, Timer, BarChart3, GraduationCap, AlertTriangle, Clock,
   Flower2, Swords, Album, Radar, HeartPulse, Smile, Flame,
-  Bell, Sparkles,
+  Bell, Sparkles, Library, LogOut
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 
 const sections = [
   {
@@ -23,6 +24,7 @@ const sections = [
       { to: '/ai-study-plan', label: 'AI Study Plan', icon: BrainCircuit },
       { to: '/quiz-generator', label: 'Quiz Generator', icon: HelpCircle },
       { to: '/flashcards', label: 'Flashcards', icon: Layers },
+      { to: '/ai-library', label: 'My AI Library', icon: Library },
     ],
   },
   {
@@ -62,6 +64,13 @@ const sections = [
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <aside className="
@@ -124,13 +133,22 @@ const Sidebar = () => {
         `}
       >
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple text-xs font-bold text-white shadow-sm flex-shrink-0">
-          S
+          {user?.name?.charAt(0)?.toUpperCase() || 'S'}
         </div>
         <div className="min-w-0">
-          <p className="truncate text-xs font-extrabold text-text-main dark:text-white">Student Buddy</p>
-          <p className="truncate text-[9px] text-text-muted dark:text-slate-400">student@studypulse.ai</p>
+          <p className="truncate text-xs font-extrabold text-text-main dark:text-white">{user?.name || 'Student Buddy'}</p>
+          <p className="truncate text-[9px] text-text-muted dark:text-slate-400">{user?.email || 'student@studypulse.ai'}</p>
         </div>
       </NavLink>
+
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        className="mt-2 w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-all font-semibold text-xs"
+      >
+        <LogOut className="h-4 w-4 flex-shrink-0" />
+        Logout
+      </button>
     </aside>
   );
 };

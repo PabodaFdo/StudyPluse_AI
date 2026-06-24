@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { HelpCircle, Sparkles, AlertCircle, RefreshCw, BookOpen, FileText, Trophy } from 'lucide-react';
+import { HelpCircle, Sparkles, AlertCircle, RefreshCw, BookOpen, FileText, Trophy, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Select from '../components/Select';
 import Badge from '../components/Badge';
 import LoadingSpinner from '../components/LoadingSpinner';
+import EmptyState from '../components/EmptyState';
 import { generateQuiz } from '../services/quiz.service';
+import api from '../services/api';
 
 const getCorrectAnswerLabel = (question) => {
   const labels = ["A", "B", "C", "D"];
@@ -25,7 +28,13 @@ const getCorrectAnswerLabel = (question) => {
 };
 
 const QuizGenerator = () => {
-  const [extractedText, setExtractedText] = useState(null);
+  const navigate = useNavigate();
+  const [extractedText, setExtractedText] = useState('');
+  const [source, setSource] = useState('pdf');
+  const [savedNotes, setSavedNotes] = useState([]);
+  const [selectedNoteId, setSelectedNoteId] = useState('');
+  const [loadingNotes, setLoadingNotes] = useState(true);
+
   const [questionCount, setQuestionCount] = useState('5');
   const [difficulty, setDifficulty] = useState('medium');
   
@@ -41,37 +50,143 @@ const QuizGenerator = () => {
       setExtractedText(text);
     }
 
-    const savedQuiz = localStorage.getItem('studypulse_generated_quiz');
-    if (savedQuiz) {
-      try {
-        setQuizResult(JSON.parse(savedQuiz));
-      } catch (e) {
-        console.error("Failed to parse saved quiz", e);
-      }
+    const savedSource = localStorage.getItem('studypulse_quiz_source');
+    if (savedSource) {
+      setSource(savedSource);
+    } else if (text) {
+      setSource('pdf');
+    } else {
+      setSource('note');
     }
 
-    const savedAnswers = localStorage.getItem('studypulse_quiz_selected_answers');
-    if (savedAnswers) {
-      try {
-        setSelectedAnswers(JSON.parse(savedAnswers));
-      } catch (e) {
-        console.error("Failed to parse saved answers", e);
-      }
+    const savedNoteId = localStorage.getItem('studypulse_quiz_selected_note_id');
+    if (savedNoteId) {
+      setSelectedNoteId(savedNoteId);
     }
 
-    const savedChecked = localStorage.getItem('studypulse_quiz_checked_questions');
-    if (savedChecked) {
-      try {
-        setCheckedQuestions(JSON.parse(savedChecked));
-      } catch (e) {
-        console.error("Failed to parse checked questions", e);
-      }
-    }
+    fetchSavedNotes();
+    // Initial validation is done after notes are loaded
   }, []);
 
+  const fetchSavedNotes = async () => {
+    setLoadingNotes(true);
+    try {
+      const res = await api.get('/notes');
+      setSavedNotes(res.data);
+      
+      let finalNoteId = localStorage.getItem('studypulse_quiz_selected_note_id');
+      if (res.data.length > 0) {
+        const exists = res.data.find(n => n.id.toString() === finalNoteId);
+        if (!exists) {
+          finalNoteId = res.data[0].id.toString();
+          setSelectedNoteId(finalNoteId);
+          localStorage.setItem('studypulse_quiz_selected_note_id', finalNoteId);
+        }
+      }
+
+      // Now validate
+      const initialSource = localStorage.getItem('studypulse_quiz_source') || (localStorage.getItem('studypulse_extracted_text') ? 'pdf' : 'note');
+      validateQuizState(initialSource, finalNoteId);
+
+    } catch (error) {
+      console.error('Failed to load notes', error);
+      // Still validate even if notes fail
+      const initialSource = localStorage.getItem('studypulse_quiz_source') || (localStorage.getItem('studypulse_extracted_text') ? 'pdf' : 'note');
+      validateQuizState(initialSource, localStorage.getItem('studypulse_quiz_selected_note_id'));
+    } finally {
+      setLoadingNotes(false);
+    }
+  };
+
+  const validateQuizState = (currentSource, currentNoteId) => {
+    let currentIdentity = '';
+    if (currentSource === 'pdf') {
+      currentIdentity = 'pdf_' + (localStorage.getItem('studypulse_extracted_text_updated_at') || '');
+    } else {
+      currentIdentity = 'note_' + (currentNoteId || '');
+    }
+
+    const quizSourceUpdatedAt = localStorage.getItem('studypulse_quiz_source_updated_at');
+
+    if (quizSourceUpdatedAt && currentIdentity !== quizSourceUpdatedAt) {
+      // Clear old quiz localStorage
+      localStorage.removeItem('studypulse_generated_quiz');
+      localStorage.removeItem('studypulse_quiz_selected_answers');
+      localStorage.removeItem('studypulse_quiz_checked_questions');
+      
+      setQuizResult(null);
+      setSelectedAnswers({});
+      setCheckedQuestions({});
+    } else {
+      // Restore saved quiz
+      const savedQuiz = localStorage.getItem('studypulse_generated_quiz');
+      if (savedQuiz) {
+        try {
+          setQuizResult(JSON.parse(savedQuiz));
+        } catch (e) {
+          console.error("Failed to parse saved quiz", e);
+        }
+      }
+
+      const savedAnswers = localStorage.getItem('studypulse_quiz_selected_answers');
+      if (savedAnswers) {
+        try {
+          setSelectedAnswers(JSON.parse(savedAnswers));
+        } catch (e) {
+          console.error("Failed to parse saved answers", e);
+        }
+      }
+
+      const savedChecked = localStorage.getItem('studypulse_quiz_checked_questions');
+      if (savedChecked) {
+        try {
+          setCheckedQuestions(JSON.parse(savedChecked));
+        } catch (e) {
+          console.error("Failed to parse checked questions", e);
+        }
+      }
+    }
+  };
+
+  const handleSourceChange = (newSource) => {
+    setSource(newSource);
+    localStorage.setItem('studypulse_quiz_source', newSource);
+    validateQuizState(newSource, selectedNoteId);
+  };
+
+  const handleNoteChange = (newNoteId) => {
+    setSelectedNoteId(newNoteId);
+    localStorage.setItem('studypulse_quiz_selected_note_id', newNoteId);
+    validateQuizState(source, newNoteId);
+  };
+
   const handleGenerate = async () => {
-    if (!extractedText) {
-      toast.error('No extracted text found. Please upload a PDF first.');
+    let textToUse = '';
+    let newIdentity = '';
+    
+    if (source === 'pdf') {
+      textToUse = extractedText;
+      newIdentity = 'pdf_' + (localStorage.getItem('studypulse_extracted_text_updated_at') || '');
+      if (!textToUse) {
+        toast.error('No PDF text found. Please extract a PDF first.');
+        return;
+      }
+    } else if (source === 'note') {
+      if (!selectedNoteId) {
+        toast.error('Please select study material before generating a quiz.');
+        return;
+      }
+      newIdentity = 'note_' + selectedNoteId;
+      const note = savedNotes.find(n => n.id.toString() === selectedNoteId.toString());
+      if (!note || !note.content || note.content.trim() === '' || note.content === 'Type your notes here...') {
+        toast.error('This note does not have enough content to generate a quiz.');
+        return;
+      }
+      textToUse = note.content;
+    }
+
+    if (!textToUse) {
+      toast.error('Please select study material before generating a quiz.');
       return;
     }
     
@@ -86,7 +201,7 @@ const QuizGenerator = () => {
     
     try {
       const data = await generateQuiz({
-        text: extractedText,
+        text: textToUse,
         question_count: questionCount,
         difficulty
       });
@@ -94,6 +209,9 @@ const QuizGenerator = () => {
       localStorage.setItem('studypulse_generated_quiz', JSON.stringify(data));
       localStorage.setItem('studypulse_quiz_selected_answers', JSON.stringify({}));
       localStorage.setItem('studypulse_quiz_checked_questions', JSON.stringify({}));
+
+      localStorage.setItem("studypulse_quiz_source_updated_at", newIdentity);
+
       toast.success('Quiz generated successfully!');
     } catch (error) {
       console.error(error);
@@ -110,6 +228,7 @@ const QuizGenerator = () => {
     localStorage.removeItem('studypulse_generated_quiz');
     localStorage.removeItem('studypulse_quiz_selected_answers');
     localStorage.removeItem('studypulse_quiz_checked_questions');
+    localStorage.removeItem('studypulse_quiz_source_updated_at');
   };
 
   const handleResetQuiz = () => {
@@ -142,68 +261,126 @@ const QuizGenerator = () => {
   
   const totalChecked = Object.keys(checkedQuestions).length;
 
-  if (!extractedText) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="AI Quiz Generator"
-          subtitle="Generate adaptive quizzes directly from your PDF documents."
-          icon={HelpCircle}
+  const renderSetup = () => {
+    if (loadingNotes) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-sm text-gray-500 animate-pulse">Loading study materials...</p>
+        </div>
+      );
+    }
+
+    if (!extractedText && savedNotes.length === 0) {
+      return (
+        <EmptyState
+          icon={BookOpen}
+          title="No study material found"
+          description="Upload a PDF or create a Smart Note first to generate a quiz based on its contents."
+          action={
+            <div className="flex gap-4 mt-4">
+              <Button onClick={() => navigate('/upload-pdf')} variant="primary">
+                Go to Upload PDF
+              </Button>
+              <Button onClick={() => navigate('/smart-notes')} variant="secondary">
+                Go to Smart Notes
+              </Button>
+            </div>
+          }
         />
-        <div className="glass-card p-8 border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 shadow-sm text-center space-y-4">
-          <BookOpen className="h-12 w-12 text-slate-400 dark:text-slate-500 mx-auto" />
-          <h3 className="font-bold text-slate-800 dark:text-white text-lg">No Study Material Found</h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto">
-            Please upload and extract a PDF first to generate a quiz based on its contents.
+      );
+    }
+
+    const sourceOptions = [];
+    if (extractedText) sourceOptions.push({ label: 'Extracted PDF Text', value: 'pdf' });
+    if (savedNotes.length > 0) sourceOptions.push({ label: 'Saved Smart Note', value: 'note' });
+
+    return (
+      <div className="glass-card max-w-xl mx-auto p-6 md:p-8 space-y-6">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-brand-500/10 mb-4">
+            <HelpCircle className="h-8 w-8 text-brand-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Quiz Setup</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
+            Configure how you want your quiz generated from your study material.
           </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Select
+              label="Study Source"
+              value={source}
+              onChange={(e) => handleSourceChange(e.target.value)}
+              options={sourceOptions}
+            />
+            {source === 'pdf' && (
+              <p className="text-[11px] text-brand-400 font-medium px-2">Using extracted PDF text from your last uploaded material.</p>
+            )}
+          </div>
+
+          {source === 'note' && (
+            <div className="space-y-1 animate-fade-in">
+              <Select
+                label="Select Note"
+                value={selectedNoteId}
+                onChange={(e) => handleNoteChange(e.target.value)}
+                options={savedNotes.map(n => ({
+                  label: `${n.title} — ${n.subject?.name || 'Unknown Subject'}`,
+                  value: n.id.toString()
+                }))}
+              />
+              <p className="text-[11px] text-brand-400 font-medium px-2">Choose one of your saved Smart Notes to create a quiz.</p>
+            </div>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2 pt-2">
+            <Select
+              label="Number of Questions"
+              value={questionCount}
+              onChange={(e) => setQuestionCount(e.target.value)}
+              options={[
+                { value: '3', label: '3 Questions (Quick)' },
+                { value: '5', label: '5 Questions (Medium)' },
+                { value: '10', label: '10 Questions (Complete)' },
+              ]}
+            />
+            <Select
+              label="Difficulty Level"
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              options={[
+                { value: 'easy', label: 'Easy' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'hard', label: 'Hard' },
+              ]}
+            />
+          </div>
+
+          <Button
+            onClick={handleGenerate}
+            disabled={isLoading}
+            className="w-full mt-4"
+            variant="primary"
+          >
+            {isLoading ? <LoadingSpinner size="sm" /> : 'Generate Quiz'}
+          </Button>
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="AI Quiz Generator"
-        subtitle="Generate adaptive quizzes directly from your extracted PDF."
+        subtitle="Generate adaptive quizzes directly from your study material."
         icon={HelpCircle}
       />
 
       <div className="max-w-3xl mx-auto space-y-6">
-        {!quizResult && !isLoading && (
-          <div className="glass-card p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm space-y-6">
-            <h3 className="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-brand-500" /> Customize Your Quiz
-            </h3>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Select
-                label="Number of Questions"
-                value={questionCount}
-                onChange={(e) => setQuestionCount(e.target.value)}
-                options={[
-                  { value: '3', label: '3 Questions (Quick)' },
-                  { value: '5', label: '5 Questions (Medium)' },
-                  { value: '10', label: '10 Questions (Complete)' },
-                ]}
-              />
-              <Select
-                label="Difficulty Level"
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                options={[
-                  { value: 'easy', label: 'Easy' },
-                  { value: 'medium', label: 'Medium' },
-                  { value: 'hard', label: 'Hard' },
-                ]}
-              />
-            </div>
-
-            <Button onClick={handleGenerate} className="w-full justify-center">
-              Generate Quiz
-            </Button>
-          </div>
-        )}
+        {!quizResult && !isLoading && renderSetup()}
 
         {isLoading && (
           <div className="glass-card p-12 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm flex flex-col items-center justify-center space-y-4">
@@ -274,7 +451,6 @@ const QuestionCard = ({ question, index, selectedAnswer, isChecked, isCorrect, o
   const labels = ["A", "B", "C", "D"];
   const correctLabel = getCorrectAnswerLabel(question);
 
-  // Force show answer reset if parent resets quiz
   useEffect(() => {
     if (!isChecked && !selectedAnswer) {
       setShowAnswer(false);
@@ -374,7 +550,6 @@ const QuestionCard = ({ question, index, selectedAnswer, isChecked, isCorrect, o
           </div>
         )
       ) : (
-        // Short Answer UI
         !showAnswer ? (
           <Button variant="secondary" onClick={() => setShowAnswer(true)} className="w-full justify-center">
             Show Answer

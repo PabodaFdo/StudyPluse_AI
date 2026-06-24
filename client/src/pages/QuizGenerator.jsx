@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HelpCircle, Sparkles, AlertCircle, RefreshCw, BookOpen, FileText, Trophy, Layers } from 'lucide-react';
+import { HelpCircle, Sparkles, AlertCircle, RefreshCw, BookOpen, FileText, Trophy, Layers, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
@@ -8,7 +8,11 @@ import Select from '../components/Select';
 import Badge from '../components/Badge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
+import Modal from '../components/Modal';
+import Input from '../components/Input';
 import { generateQuiz } from '../services/quiz.service';
+import { saveQuiz } from '../services/aiLibrary.service';
+import { getStudyMaterials } from '../services/studyMaterial.service';
 import api from '../services/api';
 
 const getCorrectAnswerLabel = (question) => {
@@ -31,77 +35,104 @@ const QuizGenerator = () => {
   const navigate = useNavigate();
   const [extractedText, setExtractedText] = useState('');
   const [source, setSource] = useState('pdf');
+  
+  const [savedMaterials, setSavedMaterials] = useState([]);
+  const [selectedMaterialId, setSelectedMaterialId] = useState('');
+  
   const [savedNotes, setSavedNotes] = useState([]);
   const [selectedNoteId, setSelectedNoteId] = useState('');
-  const [loadingNotes, setLoadingNotes] = useState(true);
+  const [loadingSources, setLoadingSources] = useState(true);
 
   const [questionCount, setQuestionCount] = useState('5');
   const [difficulty, setDifficulty] = useState('medium');
   
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saveTitle, setSaveTitle] = useState('');
 
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [checkedQuestions, setCheckedQuestions] = useState({});
 
   useEffect(() => {
     const text = localStorage.getItem('studypulse_extracted_text');
-    if (text) {
-      setExtractedText(text);
-    }
+    if (text) setExtractedText(text);
 
-    const savedSource = localStorage.getItem('studypulse_quiz_source');
-    if (savedSource) {
-      setSource(savedSource);
-    } else if (text) {
-      setSource('pdf');
-    } else {
-      setSource('note');
-    }
-
-    const savedNoteId = localStorage.getItem('studypulse_quiz_selected_note_id');
-    if (savedNoteId) {
-      setSelectedNoteId(savedNoteId);
-    }
-
-    fetchSavedNotes();
-    // Initial validation is done after notes are loaded
+    fetchSources();
   }, []);
 
-  const fetchSavedNotes = async () => {
-    setLoadingNotes(true);
+  const fetchSources = async () => {
+    setLoadingSources(true);
     try {
-      const res = await api.get('/notes');
-      setSavedNotes(res.data);
+      const [notesRes, materialsRes] = await Promise.all([
+        api.get('/notes').catch(() => ({ data: [] })),
+        getStudyMaterials().catch(() => [])
+      ]);
+      
+      const normalizeList = (response) => {
+        const payload = response?.data ?? response;
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload?.data)) return payload.data;
+        return [];
+      };
+
+      const notes = normalizeList(notesRes);
+      const materials = normalizeList(materialsRes);
+      
+      setSavedNotes(notes);
+      setSavedMaterials(materials);
       
       let finalNoteId = localStorage.getItem('studypulse_quiz_selected_note_id');
-      if (res.data.length > 0) {
-        const exists = res.data.find(n => n.id.toString() === finalNoteId);
+      if (notes.length > 0) {
+        const exists = notes.find(n => n.id.toString() === finalNoteId);
         if (!exists) {
-          finalNoteId = res.data[0].id.toString();
-          setSelectedNoteId(finalNoteId);
+          finalNoteId = notes[0].id.toString();
           localStorage.setItem('studypulse_quiz_selected_note_id', finalNoteId);
         }
+        setSelectedNoteId(finalNoteId);
+      } else if (finalNoteId) {
+        localStorage.removeItem('studypulse_quiz_selected_note_id');
+        setSelectedNoteId('');
       }
 
-      // Now validate
-      const initialSource = localStorage.getItem('studypulse_quiz_source') || (localStorage.getItem('studypulse_extracted_text') ? 'pdf' : 'note');
-      validateQuizState(initialSource, finalNoteId);
+      let finalMaterialId = localStorage.getItem('studypulse_selected_material_id');
+      if (materials.length > 0) {
+        const exists = materials.find(m => m.id.toString() === finalMaterialId);
+        if (!exists) {
+          finalMaterialId = materials[0].id.toString();
+          localStorage.setItem('studypulse_selected_material_id', finalMaterialId);
+        }
+        setSelectedMaterialId(finalMaterialId);
+      } else if (finalMaterialId) {
+        localStorage.removeItem('studypulse_selected_material_id');
+        setSelectedMaterialId('');
+      }
+
+      const initialSource = localStorage.getItem('studypulse_quiz_source') || 
+        (materials.length > 0 || localStorage.getItem('studypulse_extracted_text') ? 'pdf' : 'note');
+      
+      setSource(initialSource);
+      validateQuizState(initialSource, finalMaterialId, finalNoteId);
 
     } catch (error) {
-      console.error('Failed to load notes', error);
-      // Still validate even if notes fail
-      const initialSource = localStorage.getItem('studypulse_quiz_source') || (localStorage.getItem('studypulse_extracted_text') ? 'pdf' : 'note');
-      validateQuizState(initialSource, localStorage.getItem('studypulse_quiz_selected_note_id'));
+      console.error('Failed to load sources', error);
+      const initialSource = localStorage.getItem('studypulse_quiz_source') || 'pdf';
+      validateQuizState(
+        initialSource, 
+        localStorage.getItem('studypulse_selected_material_id'),
+        localStorage.getItem('studypulse_quiz_selected_note_id')
+      );
     } finally {
-      setLoadingNotes(false);
+      setLoadingSources(false);
     }
   };
 
-  const validateQuizState = (currentSource, currentNoteId) => {
+  const validateQuizState = (currentSource, currentMaterialId, currentNoteId) => {
     let currentIdentity = '';
     if (currentSource === 'pdf') {
-      currentIdentity = 'pdf_' + (localStorage.getItem('studypulse_extracted_text_updated_at') || '');
+      currentIdentity = 'pdf_' + (currentMaterialId || localStorage.getItem('studypulse_extracted_text_updated_at') || '');
     } else {
       currentIdentity = 'note_' + (currentNoteId || '');
     }
@@ -151,13 +182,19 @@ const QuizGenerator = () => {
   const handleSourceChange = (newSource) => {
     setSource(newSource);
     localStorage.setItem('studypulse_quiz_source', newSource);
-    validateQuizState(newSource, selectedNoteId);
+    validateQuizState(newSource, selectedMaterialId, selectedNoteId);
+  };
+
+  const handleMaterialChange = (newMaterialId) => {
+    setSelectedMaterialId(newMaterialId);
+    localStorage.setItem('studypulse_selected_material_id', newMaterialId);
+    validateQuizState(source, newMaterialId, selectedNoteId);
   };
 
   const handleNoteChange = (newNoteId) => {
     setSelectedNoteId(newNoteId);
     localStorage.setItem('studypulse_quiz_selected_note_id', newNoteId);
-    validateQuizState(source, newNoteId);
+    validateQuizState(source, selectedMaterialId, newNoteId);
   };
 
   const handleGenerate = async () => {
@@ -165,10 +202,21 @@ const QuizGenerator = () => {
     let newIdentity = '';
     
     if (source === 'pdf') {
-      textToUse = extractedText;
-      newIdentity = 'pdf_' + (localStorage.getItem('studypulse_extracted_text_updated_at') || '');
+      if (selectedMaterialId) {
+        const material = savedMaterials.find(m => m.id.toString() === selectedMaterialId.toString());
+        if (material) {
+          textToUse = material.extractedText;
+          newIdentity = 'pdf_' + material.id;
+        }
+      }
+      
+      if (!textToUse && extractedText) {
+        textToUse = extractedText;
+        newIdentity = 'pdf_' + (localStorage.getItem('studypulse_extracted_text_updated_at') || '');
+      }
+
       if (!textToUse) {
-        toast.error('No PDF text found. Please extract a PDF first.');
+        toast.error('No PDF text found. Please upload a PDF first.');
         return;
       }
     } else if (source === 'note') {
@@ -231,6 +279,45 @@ const QuizGenerator = () => {
     localStorage.removeItem('studypulse_quiz_source_updated_at');
   };
 
+  const handleOpenSaveModal = () => {
+    setSaveTitle(`Quiz - ${new Date().toLocaleDateString()}`);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmSave = async () => {
+    if (!saveTitle.trim()) {
+      toast.error('Please enter a title.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      let sourceTitle = "Extracted PDF Material";
+      if (source === 'note') {
+        const note = savedNotes.find(n => n.id.toString() === selectedNoteId.toString());
+        sourceTitle = note ? note.title : 'Saved Note';
+      } else if (selectedMaterialId) {
+        const mat = savedMaterials.find(m => m.id.toString() === selectedMaterialId.toString());
+        if (mat) sourceTitle = mat.title;
+      }
+
+      await saveQuiz({
+        title: saveTitle.trim(),
+        sourceType: source,
+        sourceTitle,
+        questions: quizResult.questions,
+        wordCount: quizResult.word_count
+      });
+      toast.success('Quiz saved to My AI Library.');
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save quiz.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleResetQuiz = () => {
     setSelectedAnswers({});
     setCheckedQuestions({});
@@ -262,7 +349,7 @@ const QuizGenerator = () => {
   const totalChecked = Object.keys(checkedQuestions).length;
 
   const renderSetup = () => {
-    if (loadingNotes) {
+    if (loadingSources) {
       return (
         <div className="flex flex-col items-center justify-center py-20">
           <LoadingSpinner size="lg" />
@@ -271,7 +358,7 @@ const QuizGenerator = () => {
       );
     }
 
-    if (!extractedText && savedNotes.length === 0) {
+    if (!extractedText && savedMaterials.length === 0 && savedNotes.length === 0) {
       return (
         <EmptyState
           icon={BookOpen}
@@ -291,9 +378,12 @@ const QuizGenerator = () => {
       );
     }
 
+    const safeMaterials = Array.isArray(savedMaterials) ? savedMaterials : [];
+    const safeNotes = Array.isArray(savedNotes) ? savedNotes : [];
+
     const sourceOptions = [];
-    if (extractedText) sourceOptions.push({ label: 'Extracted PDF Text', value: 'pdf' });
-    if (savedNotes.length > 0) sourceOptions.push({ label: 'Saved Smart Note', value: 'note' });
+    if (extractedText || safeMaterials.length > 0) sourceOptions.push({ label: 'Saved PDF Material', value: 'pdf' });
+    if (safeNotes.length > 0) sourceOptions.push({ label: 'Saved Smart Note', value: 'note' });
 
     return (
       <div className="glass-card max-w-xl mx-auto p-6 md:p-8 space-y-6">
@@ -315,10 +405,27 @@ const QuizGenerator = () => {
               onChange={(e) => handleSourceChange(e.target.value)}
               options={sourceOptions}
             />
-            {source === 'pdf' && (
-              <p className="text-[11px] text-brand-400 font-medium px-2">Using extracted PDF text from your last uploaded material.</p>
-            )}
           </div>
+
+          {source === 'pdf' && safeMaterials.length > 0 && (
+            <div className="space-y-1 animate-fade-in">
+              <Select
+                label="Select PDF Material"
+                value={selectedMaterialId}
+                onChange={(e) => handleMaterialChange(e.target.value)}
+                options={safeMaterials.map(m => ({
+                  label: m.title,
+                  value: m.id.toString()
+                }))}
+              />
+            </div>
+          )}
+          {source === 'pdf' && safeMaterials.length === 0 && extractedText && (
+             <p className="text-[11px] text-brand-400 font-medium px-2">Using extracted PDF text from your last uploaded material.</p>
+          )}
+          {source === 'pdf' && safeMaterials.length === 0 && !extractedText && (
+             <p className="text-[11px] text-brand-400 font-medium px-2">No saved PDF materials found. Upload a PDF first.</p>
+          )}
 
           {source === 'note' && (
             <div className="space-y-1 animate-fade-in">
@@ -326,7 +433,7 @@ const QuizGenerator = () => {
                 label="Select Note"
                 value={selectedNoteId}
                 onChange={(e) => handleNoteChange(e.target.value)}
-                options={savedNotes.map(n => ({
+                options={safeNotes.map(n => ({
                   label: `${n.title} — ${n.subject?.name || 'Unknown Subject'}`,
                   value: n.id.toString()
                 }))}
@@ -414,6 +521,14 @@ const QuizGenerator = () => {
                 <Button variant="secondary" onClick={handleNewQuiz} className="h-7 text-xs px-3">
                   <Sparkles className="h-3 w-3 mr-1" /> New Quiz
                 </Button>
+                <Button 
+                  onClick={handleOpenSaveModal} 
+                  disabled={isSaving} 
+                  variant="primary" 
+                  className="h-7 text-xs px-3"
+                >
+                  <Save className="h-3 w-3 mr-1" /> {isSaving ? 'Saving...' : 'Save Quiz'}
+                </Button>
               </div>
             </div>
 
@@ -442,6 +557,28 @@ const QuizGenerator = () => {
           </div>
         )}
       </div>
+
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title="Save to My AI Library">
+        <div className="space-y-4">
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-200">Title</label>
+          <input 
+            type="text"
+            value={saveTitle} 
+            onChange={(e) => setSaveTitle(e.target.value)} 
+            placeholder="Enter a title for this quiz"
+            autoFocus
+            className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+          <div className="flex justify-end gap-3 mt-6">
+            <Button variant="ghost" className="text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleConfirmSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

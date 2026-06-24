@@ -1,148 +1,693 @@
-import { useState } from 'react';
-import { Layers, RotateCw, Check, X, Sparkles } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { 
+  Layers, RotateCw, ChevronLeft, ChevronRight, RefreshCw, 
+  PlusCircle, AlertTriangle, FileText, Check, Clock, Star, Shuffle 
+} from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
+import LoadingSpinner from '../components/LoadingSpinner';
+import EmptyState from '../components/EmptyState';
+import Select from '../components/Select';
+import { generateFlashcards } from '../services/flashcard.service';
+import api from '../services/api';
 
 const Flashcards = () => {
-  const [selectedDeck, setSelectedDeck] = useState(1);
-  const [cardIdx, setCardIdx] = useState(0);
+  const navigate = useNavigate();
+  const [extractedText, setExtractedText] = useState('');
+  const [source, setSource] = useState('pdf');
+  const [savedNotes, setSavedNotes] = useState([]);
+  const [selectedNoteId, setSelectedNoteId] = useState('');
+  const [loadingNotes, setLoadingNotes] = useState(true);
+
+  const [cardCount, setCardCount] = useState(5);
+  const [difficulty, setDifficulty] = useState('medium');
+  const [loading, setLoading] = useState(false);
+
+  const [flashcardsData, setFlashcardsData] = useState(null);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [flashcardStatuses, setFlashcardStatuses] = useState({});
+  const [showCompletion, setShowCompletion] = useState(false);
 
-  const decks = [
-    {
-      id: 1,
-      name: 'Calculus III Integrals',
-      subject: 'MATH 301',
-      cards: [
-        { front: 'Formula for Greens Theorem?', back: '∫_C (P dx + Q dy) = ∬_D (∂Q/∂x - ∂P/∂y) dA' },
-        { front: 'What is a conservative vector field?', back: 'A field F where F = ∇f for some scalar function f.' },
-        { front: 'Definition of divergence?', back: 'div F = ∇ • F (flux per unit volume leaving a point)' },
-      ],
-    },
-    {
-      id: 2,
-      name: 'Quantum Physics Postulates',
-      subject: 'PHYS 410',
-      cards: [
-        { front: 'What is a state vector?', back: 'A complete mathematical description of a quantum system, denoted by |ψ⟩.' },
-        { front: 'What represents observable quantities?', back: 'Self-adjoint (Hermitian) operators acting on Hilbert space.' },
-      ],
-    },
-  ];
-
-  const currentDeck = decks.find((d) => d.id === selectedDeck) || decks[0];
-  const currentCard = currentDeck.cards[cardIdx];
-
-  const handleNext = (known) => {
-    if (known) {
-      toast.success('Nice job! Marked as Known.');
-    } else {
-      toast.error('Marked for revision.');
+  useEffect(() => {
+    const text = localStorage.getItem('studypulse_extracted_text');
+    if (text) {
+      setExtractedText(text);
     }
-    setFlipped(false);
-    setTimeout(() => {
-      if (cardIdx + 1 < currentDeck.cards.length) {
-        setCardIdx(cardIdx + 1);
-      } else {
-        setCardIdx(0);
-        toast('Deck complete! Starting over.', { icon: '🔄' });
+
+    const savedSource = localStorage.getItem('studypulse_flashcard_source');
+    if (savedSource) {
+      setSource(savedSource);
+    } else if (text) {
+      setSource('pdf');
+    } else {
+      setSource('note');
+    }
+
+    const savedNoteId = localStorage.getItem('studypulse_flashcard_selected_note_id');
+    if (savedNoteId) {
+      setSelectedNoteId(savedNoteId);
+    }
+
+    fetchSavedNotes();
+
+    const savedCards = localStorage.getItem('studypulse_generated_flashcards');
+    if (savedCards) {
+      try {
+        setFlashcardsData(JSON.parse(savedCards));
+      } catch (e) {
+        console.error('Failed to parse saved flashcards');
       }
-    }, 150);
+    }
+
+    const savedIdx = localStorage.getItem('studypulse_flashcard_current_index');
+    if (savedIdx !== null) {
+      setCurrentIdx(parseInt(savedIdx, 10));
+    }
+
+    const savedFlipped = localStorage.getItem('studypulse_flashcard_flipped');
+    if (savedFlipped === 'true') {
+      setFlipped(true);
+    }
+
+    const savedStatuses = localStorage.getItem('studypulse_flashcard_status');
+    if (savedStatuses) {
+      try {
+        setFlashcardStatuses(JSON.parse(savedStatuses));
+      } catch (e) {
+        console.error('Failed to parse saved statuses');
+      }
+    }
+  }, []);
+
+  const fetchSavedNotes = async () => {
+    setLoadingNotes(true);
+    try {
+      const res = await api.get('/notes');
+      setSavedNotes(res.data);
+      if (res.data.length > 0) {
+        const savedNoteId = localStorage.getItem('studypulse_flashcard_selected_note_id');
+        const exists = res.data.find(n => n.id.toString() === savedNoteId);
+        if (!exists) {
+          const firstId = res.data[0].id.toString();
+          setSelectedNoteId(firstId);
+          localStorage.setItem('studypulse_flashcard_selected_note_id', firstId);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load notes', error);
+    } finally {
+      setLoadingNotes(false);
+    }
+  };
+
+  const handleSourceChange = (newSource) => {
+    setSource(newSource);
+    localStorage.setItem('studypulse_flashcard_source', newSource);
+  };
+
+  const handleNoteChange = (newNoteId) => {
+    setSelectedNoteId(newNoteId);
+    localStorage.setItem('studypulse_flashcard_selected_note_id', newNoteId);
+  };
+
+  const stats = useMemo(() => {
+    let known = 0;
+    let learning = 0;
+    let important = 0;
+    
+    if (flashcardsData && flashcardsData.flashcards) {
+      flashcardsData.flashcards.forEach((c, i) => {
+        const id = c.id || i;
+        const s = flashcardStatuses[id];
+        if (s === 'known') known++;
+        else if (s === 'learning') learning++;
+        else if (s === 'important') important++;
+      });
+    }
+    
+    const total = flashcardsData?.flashcards?.length || 0;
+    const remaining = total - (known + learning + important);
+    
+    return { known, learning, important, remaining, total };
+  }, [flashcardsData, flashcardStatuses]);
+
+  const handleGenerate = async () => {
+    let textToUse = '';
+    
+    if (source === 'pdf') {
+      textToUse = extractedText;
+      if (!textToUse) {
+        toast.error('No PDF text found. Please extract a PDF first.');
+        return;
+      }
+    } else if (source === 'note') {
+      if (!selectedNoteId) {
+        toast.error('Please select study material before generating flashcards.');
+        return;
+      }
+      const note = savedNotes.find(n => n.id.toString() === selectedNoteId.toString());
+      if (!note || !note.content || note.content.trim() === '' || note.content === 'Type your notes here...') {
+        toast.error('This note does not have enough content to generate flashcards.');
+        return;
+      }
+      textToUse = note.content;
+    }
+
+    if (!textToUse) {
+      toast.error('Please select study material before generating flashcards.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await generateFlashcards({
+        text: textToUse,
+        card_count: cardCount,
+        difficulty: difficulty
+      });
+
+      if (response && response.success) {
+        const cardsWithIds = response.flashcards.map((c, i) => ({
+          ...c,
+          id: c.id || `gen-${Date.now()}-${i}`
+        }));
+        const finalResponse = { ...response, flashcards: cardsWithIds };
+
+        setFlashcardsData(finalResponse);
+        setCurrentIdx(0);
+        setFlipped(false);
+        setShowCompletion(false);
+        setFlashcardStatuses({});
+
+        localStorage.setItem('studypulse_generated_flashcards', JSON.stringify(finalResponse));
+        localStorage.setItem('studypulse_flashcard_current_index', '0');
+        localStorage.setItem('studypulse_flashcard_flipped', 'false');
+        localStorage.removeItem('studypulse_flashcard_status');
+
+        toast.success('Flashcards generated successfully!');
+      } else {
+        toast.error('Failed to generate flashcards.');
+      }
+    } catch (error) {
+      toast.error('Error generating flashcards.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (!flashcardsData || !flashcardsData.flashcards) return;
+    if (currentIdx < flashcardsData.flashcards.length - 1) {
+      const newIdx = currentIdx + 1;
+      setCurrentIdx(newIdx);
+      setFlipped(false);
+      localStorage.setItem('studypulse_flashcard_current_index', newIdx.toString());
+      localStorage.setItem('studypulse_flashcard_flipped', 'false');
+    } else {
+      setShowCompletion(true);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIdx > 0) {
+      const newIdx = currentIdx - 1;
+      setCurrentIdx(newIdx);
+      setFlipped(false);
+      setShowCompletion(false);
+      localStorage.setItem('studypulse_flashcard_current_index', newIdx.toString());
+      localStorage.setItem('studypulse_flashcard_flipped', 'false');
+    }
+  };
+
+  const handleReset = () => {
+    setCurrentIdx(0);
+    setFlipped(false);
+    setShowCompletion(false);
+    localStorage.setItem('studypulse_flashcard_current_index', '0');
+    localStorage.setItem('studypulse_flashcard_flipped', 'false');
+  };
+
+  const handleShuffle = () => {
+    if (!flashcardsData || !flashcardsData.flashcards) return;
+    
+    const shuffledCards = [...flashcardsData.flashcards].sort(() => Math.random() - 0.5);
+    const newData = { ...flashcardsData, flashcards: shuffledCards };
+    
+    setFlashcardsData(newData);
+    setCurrentIdx(0);
+    setFlipped(false);
+    setShowCompletion(false);
+    
+    localStorage.setItem('studypulse_generated_flashcards', JSON.stringify(newData));
+    localStorage.setItem('studypulse_flashcard_current_index', '0');
+    localStorage.setItem('studypulse_flashcard_flipped', 'false');
+  };
+
+  const handleNew = () => {
+    setFlashcardsData(null);
+    setCurrentIdx(0);
+    setFlipped(false);
+    setShowCompletion(false);
+    setFlashcardStatuses({});
+    
+    localStorage.removeItem('studypulse_generated_flashcards');
+    localStorage.removeItem('studypulse_flashcard_current_index');
+    localStorage.removeItem('studypulse_flashcard_flipped');
+    localStorage.removeItem('studypulse_flashcard_status');
+  };
+
+  const handleFlip = () => {
+    const newFlipped = !flipped;
+    setFlipped(newFlipped);
+    localStorage.setItem('studypulse_flashcard_flipped', newFlipped.toString());
+  };
+
+  const handleMarkStatus = (status) => {
+    if (!flashcardsData || !flashcardsData.flashcards) return;
+    const currentCard = flashcardsData.flashcards[currentIdx];
+    const cardId = currentCard.id || currentIdx;
+    
+    const newStatuses = {
+      ...flashcardStatuses,
+      [cardId]: status
+    };
+    
+    setFlashcardStatuses(newStatuses);
+    localStorage.setItem('studypulse_flashcard_status', JSON.stringify(newStatuses));
+    toast.success(`Marked as ${status}`, { icon: status === 'known' ? '✅' : status === 'learning' ? '🕒' : '⭐' });
+  };
+
+  const handleReviewLearning = () => {
+    if (!flashcardsData || !flashcardsData.flashcards) return;
+    const learningCards = flashcardsData.flashcards.filter((c, i) => {
+      const id = c.id || i;
+      return flashcardStatuses[id] === 'learning';
+    });
+    
+    if (learningCards.length === 0) {
+      toast.success('No cards marked as Still Learning!');
+      return;
+    }
+    
+    const newData = { ...flashcardsData, flashcards: learningCards };
+    setFlashcardsData(newData);
+    setCurrentIdx(0);
+    setFlipped(false);
+    setShowCompletion(false);
+    
+    localStorage.setItem('studypulse_generated_flashcards', JSON.stringify(newData));
+    localStorage.setItem('studypulse_flashcard_current_index', '0');
+    localStorage.setItem('studypulse_flashcard_flipped', 'false');
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (!flashcardsData || showCompletion) return;
+      
+      switch (e.key) {
+        case ' ':
+          e.preventDefault();
+          handleFlip();
+          break;
+        case 'ArrowRight':
+          handleNext();
+          break;
+        case 'ArrowLeft':
+          handlePrev();
+          break;
+        case 'k':
+        case 'K':
+          if (flipped) handleMarkStatus('known');
+          break;
+        case 'l':
+        case 'L':
+          if (flipped) handleMarkStatus('learning');
+          break;
+        case 'i':
+        case 'I':
+          if (flipped) handleMarkStatus('important');
+          break;
+        default:
+          break;
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [flashcardsData, currentIdx, flipped, showCompletion, flashcardStatuses]);
+
+  const renderSetup = () => {
+    if (loadingNotes) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-sm text-gray-500 animate-pulse">Loading study materials...</p>
+        </div>
+      );
+    }
+
+    if (!extractedText && savedNotes.length === 0) {
+      return (
+        <EmptyState
+          icon={FileText}
+          title="No study material found"
+          description="Upload a PDF or create a Smart Note first to generate flashcards."
+          action={
+            <div className="flex gap-4 mt-4">
+              <Button onClick={() => navigate('/upload-pdf')} variant="primary">
+                Go to Upload PDF
+              </Button>
+              <Button onClick={() => navigate('/smart-notes')} variant="secondary">
+                Go to Smart Notes
+              </Button>
+            </div>
+          }
+        />
+      );
+    }
+
+    // Determine available sources
+    const sourceOptions = [];
+    if (extractedText) sourceOptions.push({ label: 'Extracted PDF Text', value: 'pdf' });
+    if (savedNotes.length > 0) sourceOptions.push({ label: 'Saved Smart Note', value: 'note' });
+
+    return (
+      <div className="glass-card max-w-xl mx-auto p-6 md:p-8 space-y-6">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-brand-500/10 mb-4">
+            <Layers className="h-8 w-8 text-brand-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Flashcard Setup</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
+            Configure how you want your flashcards generated from your study material.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Select
+              label="Study Source"
+              value={source}
+              onChange={(e) => handleSourceChange(e.target.value)}
+              options={sourceOptions}
+            />
+            {source === 'pdf' && (
+              <p className="text-[11px] text-brand-400 font-medium px-2">Using extracted PDF text from your last uploaded material.</p>
+            )}
+          </div>
+
+          {source === 'note' && (
+            <div className="space-y-1 animate-fade-in">
+              <Select
+                label="Select Note"
+                value={selectedNoteId}
+                onChange={(e) => handleNoteChange(e.target.value)}
+                options={savedNotes.map(n => ({
+                  label: `${n.title} — ${n.subject?.name || 'Unknown Subject'}`,
+                  value: n.id.toString()
+                }))}
+              />
+              <p className="text-[11px] text-brand-400 font-medium px-2">Choose one of your saved Smart Notes to create flashcards.</p>
+            </div>
+          )}
+
+          <Select
+            label="Number of Flashcards"
+            value={cardCount}
+            onChange={(e) => setCardCount(Number(e.target.value))}
+            options={[
+              { label: '5 Cards', value: 5 },
+              { label: '10 Cards', value: 10 },
+              { label: '15 Cards', value: 15 },
+              { label: '20 Cards', value: 20 },
+            ]}
+          />
+
+          <Select
+            label="Difficulty"
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value)}
+            options={[
+              { label: 'Easy', value: 'easy' },
+              { label: 'Medium', value: 'medium' },
+              { label: 'Hard', value: 'hard' },
+            ]}
+          />
+
+          <Button
+            onClick={handleGenerate}
+            disabled={loading}
+            className="w-full mt-4"
+            variant="primary"
+          >
+            {loading ? <LoadingSpinner size="sm" /> : 'Generate Flashcards'}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCompletion = () => (
+    <div className="flex flex-col items-center justify-center max-w-2xl mx-auto py-12 space-y-8 glass-card p-8 text-center animate-fade-in">
+      <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-success-500/10 mb-2">
+        <Check className="h-10 w-10 text-success-500" />
+      </div>
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Great job! You reviewed your flashcards.</h2>
+      
+      <div className="grid grid-cols-3 gap-4 w-full max-w-md">
+        <div className="bg-success-500/10 border border-success-500/20 p-4 rounded-xl text-center">
+          <div className="text-2xl font-bold text-success-500">{stats.known}</div>
+          <div className="text-xs text-success-600/80 uppercase font-semibold">Known</div>
+        </div>
+        <div className="bg-warning-500/10 border border-warning-500/20 p-4 rounded-xl text-center">
+          <div className="text-2xl font-bold text-warning-500">{stats.learning}</div>
+          <div className="text-xs text-warning-600/80 uppercase font-semibold">Learning</div>
+        </div>
+        <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl text-center">
+          <div className="text-2xl font-bold text-purple-500">{stats.important}</div>
+          <div className="text-xs text-purple-600/80 uppercase font-semibold">Important</div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap justify-center gap-4 mt-8">
+        <Button onClick={handleReviewLearning} variant="secondary" className="border-warning-500/30 text-warning-500">
+          <Clock className="h-4 w-4 mr-2" /> Review Still Learning
+        </Button>
+        <Button onClick={handleReset} variant="secondary">
+          <RefreshCw className="h-4 w-4 mr-2" /> Restart Deck
+        </Button>
+        <Button onClick={handleNew} variant="primary">
+          <PlusCircle className="h-4 w-4 mr-2" /> New Flashcards
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderFlashcards = () => {
+    if (!flashcardsData || !flashcardsData.flashcards || flashcardsData.flashcards.length === 0) {
+      return <EmptyState title="No flashcards generated" description="Try generating again." />;
+    }
+
+    if (showCompletion) {
+      return renderCompletion();
+    }
+
+    const currentCard = flashcardsData.flashcards[currentIdx];
+    
+    return (
+      <div className="flex flex-col items-center max-w-3xl mx-auto space-y-4">
+        {/* Progress Stats */}
+        <div className="flex flex-wrap gap-4 items-center justify-center text-xs w-full bg-white/5 p-3 rounded-xl border border-white/10 shadow-sm">
+          <span className="text-success-500 font-semibold flex items-center gap-1"><Check className="h-3 w-3" /> Known: {stats.known}</span>
+          <span className="text-warning-500 font-semibold flex items-center gap-1"><Clock className="h-3 w-3" /> Still Learning: {stats.learning}</span>
+          <span className="text-purple-500 font-semibold flex items-center gap-1"><Star className="h-3 w-3" /> Important: {stats.important}</span>
+          <span className="text-gray-400 font-semibold ml-auto border-l border-white/10 pl-4">Remaining: {stats.remaining}</span>
+        </div>
+
+        {/* Top controls */}
+        <div className="flex w-full justify-between items-center mt-2">
+          <div className="flex gap-2">
+            <Button onClick={handleReset} variant="ghost" size="sm" className="gap-2 text-xs">
+              <RefreshCw className="h-3 w-3" /> Reset Cards
+            </Button>
+            <Button onClick={handleShuffle} variant="ghost" size="sm" className="gap-2 text-xs">
+              <Shuffle className="h-3 w-3" /> Shuffle Cards
+            </Button>
+            <Button onClick={handleNew} variant="ghost" size="sm" className="gap-2 text-xs">
+              <PlusCircle className="h-3 w-3" /> New Flashcards
+            </Button>
+          </div>
+          <div className="text-sm font-semibold text-gray-500">
+            Card {currentIdx + 1} of {stats.total}
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="w-full bg-gray-200 dark:bg-slate-700/50 h-1.5 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-brand-500 transition-all duration-300"
+            style={{ width: `${((currentIdx + 1) / stats.total) * 100}%` }}
+          />
+        </div>
+
+        {/* Navigation Dots */}
+        <div className="flex flex-wrap gap-1.5 justify-center max-w-2xl mx-auto my-2">
+          {flashcardsData.flashcards.map((c, i) => {
+            const id = c.id || i;
+            const status = flashcardStatuses[id];
+            let bgColor = 'bg-gray-300 dark:bg-slate-600';
+            if (status === 'known') bgColor = 'bg-success-500';
+            if (status === 'learning') bgColor = 'bg-warning-500';
+            if (status === 'important') bgColor = 'bg-purple-500';
+            
+            const isCurrent = currentIdx === i;
+            
+            return (
+              <button
+                key={id}
+                onClick={() => {
+                  setCurrentIdx(i);
+                  setFlipped(false);
+                  setShowCompletion(false);
+                  localStorage.setItem('studypulse_flashcard_current_index', i.toString());
+                  localStorage.setItem('studypulse_flashcard_flipped', 'false');
+                }}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${bgColor} ${isCurrent ? 'ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900 scale-125' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
+                title={`Card ${i + 1}`}
+              />
+            );
+          })}
+        </div>
+
+        <div
+          onClick={handleFlip}
+          className="w-full h-80 relative perspective-1000 cursor-pointer group mt-2"
+        >
+          <div
+            className={`w-full h-full rounded-2xl border border-white/70 dark:border-white/10 bg-white/80 dark:bg-slate-900/85 text-[#241b4b] dark:text-white p-8 shadow-2xl flex flex-col items-center justify-center text-center transition-all duration-500 preserve-3d ${
+              flipped ? 'rotate-y-180' : ''
+            }`}
+          >
+            {/* Front side */}
+            <div className={`absolute inset-0 p-8 flex flex-col justify-between backface-hidden ${flipped ? 'opacity-0' : 'opacity-100'}`}>
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Front</span>
+                <div className="flex gap-2">
+                  <Badge color="blue">{currentCard.difficulty}</Badge>
+                  <Badge color="purple">{currentCard.category}</Badge>
+                </div>
+              </div>
+              <p className="text-lg sm:text-xl md:text-2xl font-semibold text-[#241b4b] dark:text-white my-auto px-4">
+                {currentCard.front}
+              </p>
+              <div className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                <RotateCw className="h-3 w-3" /> Click card or press Space to flip
+              </div>
+            </div>
+
+            {/* Back side */}
+            <div className={`absolute inset-0 p-8 flex flex-col justify-between backface-hidden rotate-y-180 ${flipped ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-brand-300 uppercase tracking-wider">Back</span>
+                <div className="flex gap-2">
+                  <Badge color="blue">{currentCard.difficulty}</Badge>
+                  <Badge color="purple">{currentCard.category}</Badge>
+                </div>
+              </div>
+              <p className="text-base sm:text-lg md:text-xl font-medium text-[#6b6388] dark:text-slate-200 my-auto leading-relaxed px-4">
+                {currentCard.back}
+              </p>
+              <div className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                <RotateCw className="h-3 w-3" /> Click card or press Space to flip
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Study Status Buttons (Only show when flipped) */}
+        <div className="h-14 flex items-center justify-center w-full mt-4">
+          {flipped ? (
+            <div className="flex flex-wrap justify-center gap-3 w-full animate-fade-in">
+              <Button onClick={(e) => { e.stopPropagation(); handleMarkStatus('known'); }} variant="ghost" className="border border-success-500/30 text-success-500 hover:bg-success-500/10 flex-1 min-w-[120px] text-xs py-2">
+                <Check className="h-3 w-3" /> I Know This (K)
+              </Button>
+              <Button onClick={(e) => { e.stopPropagation(); handleMarkStatus('learning'); }} variant="ghost" className="border border-warning-500/30 text-warning-500 hover:bg-warning-500/10 flex-1 min-w-[120px] text-xs py-2">
+                <Clock className="h-3 w-3" /> Still Learning (L)
+              </Button>
+              <Button onClick={(e) => { e.stopPropagation(); handleMarkStatus('important'); }} variant="ghost" className="border border-purple-500/30 text-purple-500 hover:bg-purple-500/10 flex-1 min-w-[120px] text-xs py-2">
+                <Star className="h-3 w-3" /> Mark Important (I)
+              </Button>
+            </div>
+          ) : (
+             <div className="flex items-center justify-center gap-4 w-full">
+               <Button onClick={handlePrev} disabled={currentIdx === 0} variant="secondary" className="w-32 justify-center">
+                 <ChevronLeft className="h-4 w-4 mr-1" /> Prev
+               </Button>
+               <Button onClick={handleFlip} variant="primary" className="w-40 justify-center shadow-lg shadow-brand-500/20">
+                 <RotateCw className="h-4 w-4 mr-2" /> Flip Card
+               </Button>
+               <Button onClick={handleNext} variant="secondary" className="w-32 justify-center">
+                 Next <ChevronRight className="h-4 w-4 ml-1" />
+               </Button>
+             </div>
+          )}
+        </div>
+        
+        {/* Show next button if flipped, to allow moving on */}
+        {flipped && (
+           <div className="flex items-center justify-center gap-4 w-full mt-2">
+             <Button onClick={handlePrev} disabled={currentIdx === 0} variant="secondary" className="w-32 justify-center">
+               <ChevronLeft className="h-4 w-4 mr-1" /> Prev
+             </Button>
+             <Button onClick={handleNext} variant="primary" className="w-40 justify-center">
+               {currentIdx === stats.total - 1 ? 'Finish' : 'Next Card'} <ChevronRight className="h-4 w-4 ml-1" />
+             </Button>
+           </div>
+        )}
+
+        <div className="text-center text-xs text-gray-500 dark:text-slate-500 font-medium my-2">
+          Tip: Space to flip, ← → to move, K/L/I to mark cards
+        </div>
+
+        <div className="w-full mt-4 flex flex-col items-center gap-2">
+           <div className="flex items-center justify-center gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 rounded-lg border border-amber-200 dark:border-amber-800/30">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>AI-generated flashcards may contain mistakes. Please review with your original study material.</span>
+           </div>
+           
+           {flashcardsData.word_count && (
+              <div className="text-xs text-gray-500 dark:text-slate-400">
+                 Source Length: {flashcardsData.word_count} words
+              </div>
+           )}
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Flashcards"
-        subtitle="Spaced repetition decks generated by AI to enhance active recall."
+        title="Flashcard Generator"
+        subtitle="Generate spaced repetition decks from your extracted notes to enhance active recall."
         icon={Layers}
       />
-
-      <div className="grid gap-6 lg:grid-cols-4">
-        {/* Decks Column */}
-        <div className="glass-card p-4 space-y-3">
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block border-b border-white/5 pb-2">
-            DECKS
-          </span>
-          <div className="space-y-2">
-            {decks.map((deck) => (
-              <button
-                key={deck.id}
-                onClick={() => {
-                  setSelectedDeck(deck.id);
-                  setCardIdx(0);
-                  setFlipped(false);
-                }}
-                className={`w-full text-left p-3 rounded-xl border transition cursor-pointer ${
-                  selectedDeck === deck.id
-                    ? 'border-brand-500 bg-brand-500/10'
-                    : 'border-white/5 bg-white/[0.01] hover:bg-white/[0.03]'
-                }`}
-              >
-                <span className="text-[10px] text-brand-300 font-semibold">{deck.subject}</span>
-                <h4 className="font-semibold text-sm text-white mt-0.5">{deck.name}</h4>
-                <p className="text-[10px] text-gray-500 mt-1">{deck.cards.length} Cards</p>
-              </button>
-            ))}
-          </div>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-sm text-gray-500 animate-pulse">Generating flashcards...</p>
         </div>
-
-        {/* Card Viewer */}
-        <div className="lg:col-span-3 flex flex-col items-center justify-center py-10">
-          <div
-            onClick={() => setFlipped(!flipped)}
-            className="w-full max-w-md h-64 relative perspective-1000 cursor-pointer group"
-          >
-            <div
-              className={`w-full h-full rounded-2xl border border-white/70 dark:border-white/10 bg-white/80 dark:bg-slate-900/85 text-[#241b4b] dark:text-white p-8 shadow-2xl flex flex-col items-center justify-center text-center transition-all duration-500 preserve-3d ${
-                flipped ? 'rotate-y-180' : ''
-              }`}
-            >
-              {/* Front side */}
-              <div className={`absolute inset-0 p-8 flex flex-col justify-between backface-hidden ${flipped ? 'opacity-0' : 'opacity-100'}`}>
-                <div className="flex justify-between items-center text-xs text-gray-500">
-                  <span>Front</span>
-                  <Badge color="blue">{cardIdx + 1} / {currentDeck.cards.length}</Badge>
-                </div>
-                <p className="text-base sm:text-lg font-semibold text-[#241b4b] dark:text-white my-auto">
-                  {currentCard.front}
-                </p>
-                <div className="text-xs text-gray-500 flex items-center justify-center gap-1">
-                  <RotateCw className="h-3 w-3" /> Click card to flip
-                </div>
-              </div>
-
-              {/* Back side */}
-              <div className={`absolute inset-0 p-8 flex flex-col justify-between backface-hidden rotate-y-180 ${flipped ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="flex justify-between items-center text-xs text-brand-300">
-                  <span>Back</span>
-                  <Badge color="purple">Solution</Badge>
-                </div>
-                <p className="text-sm sm:text-base font-mono text-[#6b6388] dark:text-slate-300 my-auto leading-relaxed">
-                  {currentCard.back}
-                </p>
-                <div className="text-xs text-gray-500 flex items-center justify-center gap-1">
-                  <RotateCw className="h-3 w-3" /> Click card to flip
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          {flipped && (
-            <div className="flex gap-4 mt-6">
-              <Button onClick={() => handleNext(false)} variant="danger" className="gap-1 px-5">
-                <X className="h-4 w-4" /> Forgot
-              </Button>
-              <Button onClick={() => handleNext(true)} variant="success" className="gap-1 px-5">
-                <Check className="h-4 w-4" /> I knew it
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
+      ) : flashcardsData ? (
+        renderFlashcards()
+      ) : (
+        renderSetup()
+      )}
     </div>
   );
 };

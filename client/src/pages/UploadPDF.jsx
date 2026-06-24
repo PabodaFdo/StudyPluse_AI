@@ -84,6 +84,20 @@ const UploadPDF = () => {
       setAnalysisResult(data);
       sessionStorage.setItem(PDF_STORAGE_KEY, JSON.stringify(data));
       localStorage.setItem("studypulse_extracted_text", data.text);
+      localStorage.setItem("studypulse_extracted_text_updated_at", Date.now().toString());
+
+      // Clear old generated AI results
+      localStorage.removeItem("studypulse_generated_quiz");
+      localStorage.removeItem("studypulse_quiz_selected_answers");
+      localStorage.removeItem("studypulse_quiz_checked_questions");
+      
+      localStorage.removeItem("studypulse_generated_flashcards");
+      localStorage.removeItem("studypulse_flashcard_current_index");
+      localStorage.removeItem("studypulse_flashcard_flipped");
+      localStorage.removeItem("studypulse_flashcard_status");
+      
+      localStorage.removeItem("studypulse_generated_summary");
+
       toast.success('PDF extracted successfully!');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to extract text from PDF');

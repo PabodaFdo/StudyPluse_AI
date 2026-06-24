@@ -1,33 +1,195 @@
 import { useState, useEffect } from 'react';
-import { FileText, Sparkles, AlertCircle, BookOpen, Clock, BrainCircuit } from 'lucide-react';
+import { FileText, Sparkles, AlertCircle, BookOpen, BrainCircuit, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
+import Button from '../components/Button';
+import Select from '../components/Select';
+import LoadingSpinner from '../components/LoadingSpinner';
+import EmptyState from '../components/EmptyState';
+import Modal from '../components/Modal';
+import Input from '../components/Input';
 import { generateSummary } from '../services/summary.service';
+import { saveSummary } from '../services/aiLibrary.service';
+import { getStudyMaterials } from '../services/studyMaterial.service';
+import api from '../services/api';
 
 const GenerateSummary = () => {
+  const navigate = useNavigate();
   const [extractedText, setExtractedText] = useState('');
+  const [source, setSource] = useState('pdf');
+  
+  const [savedMaterials, setSavedMaterials] = useState([]);
+  const [selectedMaterialId, setSelectedMaterialId] = useState('');
+  
+  const [savedNotes, setSavedNotes] = useState([]);
+  const [selectedNoteId, setSelectedNoteId] = useState('');
+  
+  const [loadingSources, setLoadingSources] = useState(true);
+
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [summaryResult, setSummaryResult] = useState(null);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saveTitle, setSaveTitle] = useState('');
 
   useEffect(() => {
     const text = localStorage.getItem('studypulse_extracted_text');
-    if (text) {
-      setExtractedText(text);
-    }
+    if (text) setExtractedText(text);
+
+    fetchSources();
   }, []);
 
+  const fetchSources = async () => {
+    setLoadingSources(true);
+    try {
+      const [notesRes, materialsRes] = await Promise.all([
+        api.get('/notes').catch(() => ({ data: [] })),
+        getStudyMaterials().catch(() => [])
+      ]);
+      
+      const normalizeList = (response) => {
+        const payload = response?.data ?? response;
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload?.data)) return payload.data;
+        return [];
+      };
+
+      const notes = normalizeList(notesRes);
+      const materials = normalizeList(materialsRes);
+      
+      setSavedNotes(notes);
+      setSavedMaterials(materials);
+      
+      let finalNoteId = localStorage.getItem('studypulse_summary_selected_note_id');
+      if (notes.length > 0) {
+        const exists = notes.find(n => n.id.toString() === finalNoteId);
+        if (!exists) {
+          finalNoteId = notes[0].id.toString();
+          localStorage.setItem('studypulse_summary_selected_note_id', finalNoteId);
+        }
+        setSelectedNoteId(finalNoteId);
+      } else if (finalNoteId) {
+        localStorage.removeItem('studypulse_summary_selected_note_id');
+        setSelectedNoteId('');
+      }
+
+      let finalMaterialId = localStorage.getItem('studypulse_selected_material_id');
+      if (materials.length > 0) {
+        const exists = materials.find(m => m.id.toString() === finalMaterialId);
+        if (!exists) {
+          finalMaterialId = materials[0].id.toString();
+          localStorage.setItem('studypulse_selected_material_id', finalMaterialId);
+        }
+        setSelectedMaterialId(finalMaterialId);
+      } else if (finalMaterialId) {
+        localStorage.removeItem('studypulse_selected_material_id');
+        setSelectedMaterialId('');
+      }
+
+      const initialSource = localStorage.getItem('studypulse_summary_source') || 
+        (materials.length > 0 || localStorage.getItem('studypulse_extracted_text') ? 'pdf' : 'note');
+      
+      setSource(initialSource);
+      validateSummaryState(initialSource, finalMaterialId, finalNoteId);
+
+    } catch (error) {
+      console.error('Failed to load sources', error);
+    } finally {
+      setLoadingSources(false);
+    }
+  };
+
+  const validateSummaryState = (currentSource, currentMaterialId, currentNoteId) => {
+    let currentIdentity = '';
+    if (currentSource === 'pdf') {
+      currentIdentity = 'pdf_' + (currentMaterialId || localStorage.getItem('studypulse_extracted_text_updated_at') || '');
+    } else {
+      currentIdentity = 'note_' + (currentNoteId || '');
+    }
+
+    const summarySourceId = localStorage.getItem('studypulse_summary_source_id');
+
+    if (summarySourceId && currentIdentity !== summarySourceId) {
+      localStorage.removeItem('studypulse_generated_summary');
+      setSummaryResult(null);
+    } else {
+      const savedSummary = localStorage.getItem('studypulse_generated_summary');
+      if (savedSummary) {
+        try {
+          setSummaryResult(JSON.parse(savedSummary));
+        } catch (e) {
+          console.error("Failed to parse saved summary", e);
+        }
+      }
+    }
+  };
+
+  const handleSourceChange = (newSource) => {
+    setSource(newSource);
+    localStorage.setItem('studypulse_summary_source', newSource);
+    validateSummaryState(newSource, selectedMaterialId, selectedNoteId);
+  };
+
+  const handleMaterialChange = (newMaterialId) => {
+    setSelectedMaterialId(newMaterialId);
+    localStorage.setItem('studypulse_selected_material_id', newMaterialId);
+    validateSummaryState(source, newMaterialId, selectedNoteId);
+  };
+
+  const handleNoteChange = (newNoteId) => {
+    setSelectedNoteId(newNoteId);
+    localStorage.setItem('studypulse_summary_selected_note_id', newNoteId);
+    validateSummaryState(source, selectedMaterialId, newNoteId);
+  };
+
   const handleGenerateSummary = async () => {
-    if (!extractedText) {
-      toast.error('No text found. Please extract a PDF first.');
-      return;
+    let textToUse = '';
+    let newIdentity = '';
+    
+    if (source === 'pdf') {
+      if (selectedMaterialId) {
+        const material = savedMaterials.find(m => m.id.toString() === selectedMaterialId.toString());
+        if (material) {
+          textToUse = material.extractedText;
+          newIdentity = 'pdf_' + material.id;
+        }
+      }
+      
+      if (!textToUse && extractedText) {
+        textToUse = extractedText;
+        newIdentity = 'pdf_' + (localStorage.getItem('studypulse_extracted_text_updated_at') || '');
+      }
+
+      if (!textToUse) {
+        toast.error('No PDF text found. Please upload a PDF first.');
+        return;
+      }
+    } else if (source === 'note') {
+      if (!selectedNoteId) {
+        toast.error('Please select a note.');
+        return;
+      }
+      newIdentity = 'note_' + selectedNoteId;
+      const note = savedNotes.find(n => n.id.toString() === selectedNoteId.toString());
+      if (!note || !note.content || note.content.trim() === '') {
+        toast.error('This note is empty.');
+        return;
+      }
+      textToUse = note.content;
     }
 
     setIsGenerating(true);
     setSummaryResult(null);
+    localStorage.removeItem('studypulse_generated_summary');
 
     try {
-      const data = await generateSummary(extractedText);
+      const data = await generateSummary(textToUse);
       setSummaryResult(data);
+      localStorage.setItem('studypulse_generated_summary', JSON.stringify(data));
+      localStorage.setItem("studypulse_summary_source_id", newIdentity);
+
       toast.success('Summary generated successfully!');
     } catch (error) {
       console.error('Summary Generation Error:', error);
@@ -37,59 +199,183 @@ const GenerateSummary = () => {
     }
   };
 
-  if (!extractedText) {
-    return (
-      <div className="space-y-6 pb-12">
-        <PageHeader
-          title="Generate AI Summary"
-          subtitle="Transform your uploaded PDF notes into a condensed, easy-to-read study summary."
-          icon={BrainCircuit}
-        />
-        <div className="max-w-3xl mx-auto mt-12">
-          <div className="glass-card p-10 border border-white/10 bg-white/[0.02] dark:bg-slate-900/40 rounded-2xl shadow-xl flex flex-col items-center justify-center text-center">
-            <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-full mb-4">
-              <FileText className="h-10 w-10 text-slate-400 dark:text-slate-500" />
+  const handleOpenSaveModal = () => {
+    setSaveTitle(`Summary - ${new Date().toLocaleDateString()}`);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmSave = async () => {
+    if (!saveTitle.trim()) {
+      toast.error('Please enter a title.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      let sourceTitle = "Extracted PDF Material";
+      if (source === 'note') {
+        const note = savedNotes.find(n => n.id.toString() === selectedNoteId.toString());
+        sourceTitle = note ? note.title : 'Saved Note';
+      } else if (selectedMaterialId) {
+        const mat = savedMaterials.find(m => m.id.toString() === selectedMaterialId.toString());
+        if (mat) sourceTitle = mat.title;
+      }
+
+      await saveSummary({
+        title: saveTitle.trim(),
+        sourceType: source,
+        sourceTitle,
+        content: {
+          main_summary: summaryResult.main_summary,
+          important_points: summaryResult.important_points,
+          key_terms: summaryResult.key_terms,
+          section_summaries: summaryResult.section_summaries
+        },
+        wordCount: summaryResult.word_count
+      });
+      toast.success('Summary saved to My AI Library.');
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save summary.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleNewSummary = () => {
+    setSummaryResult(null);
+    localStorage.removeItem('studypulse_generated_summary');
+    localStorage.removeItem('studypulse_summary_source_id');
+  };
+
+  const renderSetup = () => {
+    if (loadingSources) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-sm text-gray-500 animate-pulse">Loading study materials...</p>
+        </div>
+      );
+    }
+
+    if (!extractedText && savedMaterials.length === 0 && savedNotes.length === 0) {
+      return (
+        <EmptyState
+          icon={BookOpen}
+          title="No study material found"
+          description="Upload a PDF or create a Smart Note first to generate a summary."
+          action={
+            <div className="flex gap-4 mt-4">
+              <Button onClick={() => navigate('/upload-pdf')} variant="primary">
+                Go to Upload PDF
+              </Button>
+              <Button onClick={() => navigate('/smart-notes')} variant="secondary">
+                Go to Smart Notes
+              </Button>
             </div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Extracted Text Found</h3>
-            <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md">
-              Please upload and extract a PDF first before generating a summary.
-            </p>
+          }
+        />
+      );
+    }
+
+    const safeMaterials = Array.isArray(savedMaterials) ? savedMaterials : [];
+    const safeNotes = Array.isArray(savedNotes) ? savedNotes : [];
+
+    const sourceOptions = [];
+    if (extractedText || safeMaterials.length > 0) sourceOptions.push({ label: 'Saved PDF Material', value: 'pdf' });
+    if (safeNotes.length > 0) sourceOptions.push({ label: 'Saved Smart Note', value: 'note' });
+
+    return (
+      <div className="glass-card max-w-xl mx-auto p-6 md:p-8 space-y-6">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-brand-500/10 mb-4">
+            <BookOpen className="h-8 w-8 text-brand-400" />
           </div>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Summary Setup</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
+            Choose your source material to generate a comprehensive AI summary.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Select
+              label="Study Source"
+              value={source}
+              onChange={(e) => handleSourceChange(e.target.value)}
+              options={sourceOptions}
+            />
+          </div>
+
+          {source === 'pdf' && safeMaterials.length > 0 && (
+            <div className="space-y-1 animate-fade-in">
+              <Select
+                label="Select PDF Material"
+                value={selectedMaterialId}
+                onChange={(e) => handleMaterialChange(e.target.value)}
+                options={safeMaterials.map(m => ({
+                  label: m.title,
+                  value: m.id.toString()
+                }))}
+              />
+            </div>
+          )}
+          {source === 'pdf' && safeMaterials.length === 0 && extractedText && (
+             <p className="text-[11px] text-brand-400 font-medium px-2">Using extracted PDF text from your last uploaded material.</p>
+          )}
+          {source === 'pdf' && safeMaterials.length === 0 && !extractedText && (
+             <p className="text-[11px] text-brand-400 font-medium px-2">No saved PDF materials found. Upload a PDF first.</p>
+          )}
+
+          {source === 'note' && (
+            <div className="space-y-1 animate-fade-in">
+              <Select
+                label="Select Note"
+                value={selectedNoteId}
+                onChange={(e) => handleNoteChange(e.target.value)}
+                options={safeNotes.map(n => ({
+                  label: `${n.title} — ${n.subject?.name || 'Unknown'}`,
+                  value: n.id.toString()
+                }))}
+              />
+            </div>
+          )}
+
+          <Button
+            onClick={handleGenerateSummary}
+            disabled={isGenerating}
+            className="w-full mt-4"
+            variant="primary"
+          >
+            {isGenerating ? <LoadingSpinner size="sm" /> : 'Generate Summary'}
+          </Button>
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="space-y-6 pb-12">
       <PageHeader
         title="Generate AI Summary"
-        subtitle="Transform your uploaded PDF notes into a condensed, easy-to-read study summary."
+        subtitle="Transform your notes or PDFs into a condensed, easy-to-read study summary."
         icon={BrainCircuit}
       />
 
       <div className="max-w-4xl mx-auto space-y-8">
-        {!summaryResult && (
-          <div className="glass-card p-8 border border-white/10 bg-white/[0.02] dark:bg-slate-900/40 rounded-2xl shadow-xl text-center">
-            <div className="bg-brand-500/10 p-4 rounded-full inline-block mb-4">
-              <BookOpen className="h-10 w-10 text-brand-500" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Ready to Summarize</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-lg mx-auto">
-              We found your extracted PDF text. Click the button below to generate a smart study summary.
+        {!summaryResult && !isGenerating && renderSetup()}
+
+        {isGenerating && (
+          <div className="glass-card p-12 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm flex flex-col items-center justify-center space-y-4">
+            <LoadingSpinner size="lg" />
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
+              Analyzing text and generating summary...
             </p>
-            <button
-              onClick={handleGenerateSummary}
-              disabled={isGenerating}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-3.5 text-sm font-bold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60 shadow-lg shadow-brand-500/20"
-            >
-              <Sparkles className="h-5 w-5" />
-              {isGenerating ? 'Generating Summary...' : 'Generate Summary'}
-            </button>
           </div>
         )}
 
-        {summaryResult && (
+        {summaryResult && !isGenerating && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header / Badges */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
@@ -102,6 +388,17 @@ const GenerateSummary = () => {
                   <FileText className="h-3.5 w-3.5" />
                   {summaryResult.word_count} words
                 </span>
+                <Button variant="secondary" onClick={handleNewSummary} className="h-7 text-xs px-3">
+                  <Sparkles className="h-3 w-3 mr-1" /> New Summary
+                </Button>
+                <button 
+                  onClick={handleOpenSaveModal} 
+                  disabled={isSaving} 
+                  className="px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-semibold transition flex items-center gap-1.5 text-xs shadow-md"
+                >
+                  <Save className="h-3.5 w-3.5" /> 
+                  {isSaving ? 'Saving...' : 'Save Summary'}
+                </button>
               </div>
             </div>
 
@@ -194,6 +491,28 @@ const GenerateSummary = () => {
           </div>
         )}
       </div>
+
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title="Save to My AI Library">
+        <div className="space-y-4">
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-200">Title</label>
+          <input 
+            type="text"
+            value={saveTitle} 
+            onChange={(e) => setSaveTitle(e.target.value)} 
+            placeholder="Enter a title for this summary"
+            autoFocus
+            className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+          <div className="flex justify-end gap-3 mt-6">
+            <Button variant="ghost" className="text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleConfirmSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

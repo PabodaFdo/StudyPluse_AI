@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import { extractPdfText } from '../services/pdf.service';
+import { saveStudyMaterial } from '../services/studyMaterial.service';
 
 const PDF_STORAGE_KEY = 'studypulse_extracted_pdf';
 
@@ -85,6 +86,22 @@ const UploadPDF = () => {
       sessionStorage.setItem(PDF_STORAGE_KEY, JSON.stringify(data));
       localStorage.setItem("studypulse_extracted_text", data.text);
       localStorage.setItem("studypulse_extracted_text_updated_at", Date.now().toString());
+
+      try {
+        const savedMaterial = await saveStudyMaterial({
+          title: file.name,
+          fileName: file.name,
+          extractedText: data.text,
+          wordCount: data.text.split(/\s+/).filter(w => w.length > 0).length
+        });
+        
+        if (savedMaterial.success && savedMaterial.data) {
+          localStorage.setItem("studypulse_selected_material_id", savedMaterial.data.id);
+        }
+      } catch (saveErr) {
+        console.error("Failed to permanently save extracted PDF to DB:", saveErr);
+        toast.error("Extracted text saved locally, but failed to sync to database.");
+      }
 
       // Clear old generated AI results
       localStorage.removeItem("studypulse_generated_quiz");

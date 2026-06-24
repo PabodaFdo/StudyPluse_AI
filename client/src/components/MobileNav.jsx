@@ -1,13 +1,22 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, Sparkles } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Sparkles, LogOut } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { sections } from './Sidebar';
 import ThemeToggle from './ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 
 const MobileNav = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
+  const handleLogout = () => {
+    setOpen(false);
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <div className="lg:hidden">
@@ -83,11 +92,19 @@ const MobileNav = () => {
                     : 'text-text-muted hover:bg-lavender/10 dark:text-slate-400 dark:hover:bg-white/8 dark:hover:text-white'
                   }`}
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple text-white text-[10px] font-bold">
-                  S
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple text-white text-[10px] font-bold flex-shrink-0">
+                  {user?.name?.charAt(0)?.toUpperCase() || 'S'}
                 </div>
-                Profile
+                <span className="truncate">{user?.name || 'Profile'}</span>
               </NavLink>
+
+              <button
+                onClick={handleLogout}
+                className="mt-2 flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-xs font-bold transition text-slate-700 dark:text-slate-200 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+              >
+                <LogOut className="h-4 w-4 flex-shrink-0" />
+                <span>Logout</span>
+              </button>
             </motion.nav>
           </>
         )}

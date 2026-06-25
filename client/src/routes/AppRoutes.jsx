@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts
 import PublicLayout from '../layouts/PublicLayout';
@@ -16,7 +16,7 @@ import Dashboard from '../pages/Dashboard';
 import Subjects from '../pages/Subjects';
 import SmartNotes from '../pages/SmartNotes';
 import UploadPDF from '../pages/UploadPDF';
-import GenerateSummary from '../pages/GenerateSummary';
+
 import AIStudyPlan from '../pages/AIStudyPlan';
 import QuizGenerator from '../pages/QuizGenerator';
 import Flashcards from '../pages/Flashcards';
@@ -58,7 +58,7 @@ const AppRoutes = () => {
           <Route path="/notes" element={<SmartNotes />} />
 
           <Route path="/upload-pdf" element={<UploadPDF />} />
-          <Route path="/generate-summary" element={<GenerateSummary />} />
+          <Route path="/generate-summary" element={<Navigate to="/smart-notes" replace />} />
 
           <Route path="/ai-study-plan" element={<AIStudyPlan />} />
           <Route path="/study-plan" element={<AIStudyPlan />} />

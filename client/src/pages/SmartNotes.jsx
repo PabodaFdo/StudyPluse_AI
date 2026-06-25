@@ -11,6 +11,7 @@ import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../services/api';
 import { generateSummary } from '../services/summary.service';
+import { saveSummary } from '../services/aiLibrary.service';
 
 const SmartNotes = () => {
   const [notes, setNotes] = useState([]);
@@ -20,6 +21,29 @@ const SmartNotes = () => {
   const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingLibrarySummary, setIsSavingLibrarySummary] = useState(false);
+  const [savedLibrarySummaries, setSavedLibrarySummaries] = useState({});
+
+  const handleSaveLibrarySummary = async () => {
+    if (!selectedNote || !selectedNote.summary) return;
+    setIsSavingLibrarySummary(true);
+    try {
+      const payload = {
+        title: `${selectedNote.title} - Summary`,
+        sourceType: "smart_note",
+        sourceTitle: selectedNote.title,
+        content: selectedNote.summary,
+        wordCount: selectedNote.summary.word_count || selectedNote.summary.wordCount || 0
+      };
+      await saveSummary(payload);
+      setSavedLibrarySummaries(prev => ({ ...prev, [selectedNote.id]: true }));
+      toast.success('Summary saved to My AI Library.');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to save summary to library');
+    } finally {
+      setIsSavingLibrarySummary(false);
+    }
+  };
   const [isMarkingRevised, setIsMarkingRevised] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newSubjectId, setNewSubjectId] = useState('');
@@ -129,6 +153,7 @@ const SmartNotes = () => {
           ? { ...n, summary: data }
           : n
       ));
+      setSavedLibrarySummaries(prev => ({ ...prev, [selectedNote.id]: false }));
       toast.success('AI Summary Generated!');
     } catch (error) {
       console.error('Summary Generation Error:', error);
@@ -171,6 +196,13 @@ const SmartNotes = () => {
         subtitle="AI-synthesized note taking and automatic study summary sheets."
         icon={FileText}
       />
+
+      <div className="flex items-start gap-3 p-4 rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-800 dark:text-purple-200">
+        <Sparkles className="h-5 w-5 shrink-0 mt-0.5 text-purple-600 dark:text-purple-400" />
+        <p className="text-sm font-medium">
+          Each Smart Note can be used as a topic for summaries, quizzes, flashcards, and weak topic tracking.
+        </p>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Notes list */}
@@ -260,7 +292,7 @@ const SmartNotes = () => {
                     {selectedNote.isRevised ? 'Revised' : isMarkingRevised ? 'Marking...' : 'Mark as Revised'}
                   </Button>
                   <Button variant="secondary" size="sm" className="gap-1.5" onClick={handleSaveNote} disabled={isSaving}>
-                    <Save className="h-4 w-4" /> {isSaving ? 'Saving...' : 'Save'}
+                    <Save className="h-4 w-4" /> {isSaving ? 'Saving...' : 'Save Note'}
                   </Button>
                   <Button variant="secondary" size="sm" className="gap-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 border-transparent" onClick={() => setOpenDeleteModal(true)}>
                     <Trash2 className="h-4 w-4" /> Delete
@@ -287,6 +319,18 @@ const SmartNotes = () => {
                       <Sparkles className="h-4 w-4 text-brand-400" /> AI STUDY SUMMARY
                     </h4>
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleSaveLibrarySummary}
+                        disabled={isSavingLibrarySummary || savedLibrarySummaries[selectedNote.id]}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors shadow-sm flex items-center gap-1.5 ${
+                          savedLibrarySummaries[selectedNote.id] 
+                            ? 'bg-purple-100 text-purple-500 dark:bg-purple-900/30 dark:text-purple-400 cursor-not-allowed' 
+                            : 'bg-purple-500 hover:bg-purple-600 text-white'
+                        }`}
+                      >
+                        <Save className="h-3 w-3" />
+                        {savedLibrarySummaries[selectedNote.id] ? 'Saved to My AI Library' : isSavingLibrarySummary ? 'Saving...' : 'Save Summary to My AI Library'}
+                      </button>
                       <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-200 flex items-center gap-1">
                         <FileText className="h-3 w-3" />
                         {selectedNote.summary.word_count} words

@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { HeartPulse, Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { HeartPulse, Activity, AlertTriangle, CheckCircle, XCircle, Download } from 'lucide-react';
+import toast from 'react-hot-toast';
 import PageHeader from '../components/PageHeader';
 import { subjectHealthService } from '../services/subjectHealth.service';
+import { subjectService } from '../services/subject.service';
 
 const defaultFormData = {
-  subjectName: "",
   attendancePercentage: "",
   averageMark: "",
   quizAverage: "",
@@ -20,6 +21,60 @@ const SubjectHealth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
+  
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState('');
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const data = await subjectService.getSubjects();
+        setSubjects(data);
+      } catch (err) {
+        console.error('Failed to fetch subjects', err);
+      }
+    };
+    fetchSubjects();
+  }, []);
+
+  const handleAutoFill = async () => {
+    if (!selectedSubjectId) {
+      toast.error('Please select a subject first.');
+      return;
+    }
+    setIsAutoFilling(true);
+    try {
+      const analytics = await subjectService.getSubjectAnalytics(selectedSubjectId);
+      
+      if (
+        !analytics.attendancePercentage && 
+        !analytics.averageMark && 
+        !analytics.quizAverage && 
+        !analytics.studyHoursPerWeek && 
+        !analytics.focusSessionsCompleted && 
+        !analytics.notesCount &&
+        !analytics.examMark
+      ) {
+        toast.error('No academic data found for this subject. You can enter values manually.');
+      } else {
+        setFormData({
+          attendancePercentage: analytics.attendancePercentage || 0,
+          averageMark: analytics.averageMark || 0,
+          quizAverage: analytics.quizAverage || 0,
+          studyHoursThisWeek: analytics.studyHoursPerWeek || 0,
+          focusSessionsCompleted: analytics.focusSessionsCompleted || 0,
+          notesCount: analytics.notesCount || 0,
+          missedDeadlines: analytics.missedDeadlines || 0,
+        });
+        toast.success('Subject health form filled from your study data.');
+      }
+    } catch (err) {
+      toast.error('Failed to fetch subject data for auto-fill.');
+    } finally {
+      setIsAutoFilling(false);
+    }
+  };
 
   const handleReset = () => {
     setFormData(defaultFormData);
@@ -42,8 +97,11 @@ const SubjectHealth = () => {
     setResult(null);
 
     try {
+      const selectedSubject = subjects.find((s) => String(s.id) === String(selectedSubjectId));
+      const subjectName = selectedSubject?.name || selectedSubject?.subjectName || "Unknown Subject";
+
       const payload = {
-        subjectName: formData.subjectName,
+        subjectName: subjectName,
         attendancePercentage: Number(formData.attendancePercentage),
         averageMark: Number(formData.averageMark),
         quizAverage: Number(formData.quizAverage),
@@ -92,105 +150,136 @@ const SubjectHealth = () => {
         icon={HeartPulse}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Form Section */}
-        <div className="glass-card p-6 border border-white/5 bg-white/[0.02] dark:bg-slate-900/50 rounded-2xl">
-          <h3 className="font-semibold text-lg text-slate-900 dark:text-white mb-4">Calculate Score</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Subject Name</label>
-              <input 
-                type="text" 
-                name="subjectName" 
-                value={formData.subjectName} 
-                onChange={handleChange} 
-                required
-                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
-              />
+        <div className="bg-slate-900/70 border border-slate-700 p-6 rounded-2xl">
+          <h3 className="font-semibold text-lg text-white mb-6">Calculate Score</h3>
+          
+          <div className="mb-6 space-y-3">
+            <label className="block text-sm font-semibold text-slate-200">
+              Select Subject
+            </label>
+
+            <div className="flex flex-col md:flex-row gap-3">
+              <select
+                value={selectedSubjectId}
+                onChange={(e) => setSelectedSubjectId(e.target.value)}
+                className="w-full md:flex-1 px-4 py-3 rounded-xl bg-slate-900 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              >
+                <option value="">Select a subject...</option>
+                {subjects.map((subject) => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name || subject.subjectName}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={handleAutoFill}
+                disabled={!selectedSubjectId || isAutoFilling}
+                className={`w-full md:w-auto px-5 py-3 rounded-xl font-bold transition-all ${
+                  !selectedSubjectId || isAutoFilling
+                    ? "bg-slate-700 !text-slate-300 cursor-not-allowed"
+                    : "bg-cyan-500 hover:bg-cyan-600 !text-white shadow-lg shadow-cyan-500/20"
+                }`}
+              >
+                {isAutoFilling ? "Filling..." : "Auto Fill from My Data"}
+              </button>
             </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Attendance (%)</label>
+                <label className="block text-sm text-slate-200 mb-1">Attendance (%)</label>
                 <input 
                   type="number" 
                   name="attendancePercentage" 
                   value={formData.attendancePercentage} 
                   onChange={handleChange} 
                   required
+                  step="any"
                   min="0" max="100"
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Avg Mark (%)</label>
+                <label className="block text-sm text-slate-200 mb-1">Avg Mark (%)</label>
                 <input 
                   type="number" 
                   name="averageMark" 
                   value={formData.averageMark} 
                   onChange={handleChange} 
                   required
+                  step="any"
                   min="0" max="100"
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Quiz Avg (%)</label>
+                <label className="block text-sm text-slate-200 mb-1">Quiz Avg (%)</label>
                 <input 
                   type="number" 
                   name="quizAverage" 
                   value={formData.quizAverage} 
                   onChange={handleChange} 
                   required
+                  step="any"
                   min="0" max="100"
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Study Hours</label>
+                <label className="block text-sm text-slate-200 mb-1">Study Hours</label>
                 <input 
                   type="number" 
                   name="studyHoursThisWeek" 
                   value={formData.studyHoursThisWeek} 
                   onChange={handleChange} 
                   required
+                  step="any"
                   min="0"
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Focus Sessions</label>
+                <label className="block text-sm text-slate-200 mb-1">Focus Sessions</label>
                 <input 
                   type="number" 
                   name="focusSessionsCompleted" 
                   value={formData.focusSessionsCompleted} 
                   onChange={handleChange} 
                   required
+                  step="1"
                   min="0"
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Notes Count</label>
+                <label className="block text-sm text-slate-200 mb-1">Notes Count</label>
                 <input 
                   type="number" 
                   name="notesCount" 
                   value={formData.notesCount} 
                   onChange={handleChange} 
                   required
+                  step="1"
                   min="0"
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Missed Deadlines</label>
+                <label className="block text-sm text-slate-200 mb-1">Missed Deadlines</label>
                 <input 
                   type="number" 
                   name="missedDeadlines" 
                   value={formData.missedDeadlines} 
                   onChange={handleChange} 
                   required
+                  step="1"
                   min="0"
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400"
                 />
               </div>
             </div>
@@ -199,7 +288,7 @@ const SubjectHealth = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full px-6 py-4 rounded-xl bg-purple-500 hover:bg-purple-600 !text-white font-bold transition-all shadow-lg shadow-purple-500/20"
               >
                 {loading ? 'Calculating...' : 'Calculate Health'}
               </button>
@@ -208,7 +297,7 @@ const SubjectHealth = () => {
                 type="button"
                 onClick={handleReset}
                 disabled={loading}
-                className="rounded-xl border border-slate-300 bg-white/80 px-4 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                className="w-full px-6 py-4 rounded-xl border border-slate-600 bg-slate-900/60 hover:bg-slate-800 !text-slate-200 font-bold transition-all"
               >
                 Reset
               </button>

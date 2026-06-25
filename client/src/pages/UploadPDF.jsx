@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { 
   Upload, File, Sparkles, CheckCircle2, AlertCircle, 
-  Copy, Check, FileText, LayoutGrid, HelpCircle, Info
+  Copy, Check, FileText, LayoutGrid, HelpCircle, Info, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import { extractPdfText } from '../services/pdf.service';
 import { saveStudyMaterial } from '../services/studyMaterial.service';
+import { subjectService } from '../services/subject.service';
+import { noteService } from '../services/note.service';
 
 const PDF_STORAGE_KEY = 'studypulse_extracted_pdf';
 
@@ -21,6 +23,60 @@ const UploadPDF = () => {
   // UI states
   const [isDragging, setIsDragging] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Smart Note Modal State
+  const [subjects, setSubjects] = useState([]);
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [noteSubjectId, setNoteSubjectId] = useState('');
+  const [noteTitle, setNoteTitle] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const data = await subjectService.getSubjects();
+        setSubjects(data);
+      } catch (err) {
+        console.error('Failed to load subjects', err);
+      }
+    };
+    fetchSubjects();
+  }, []);
+
+  const handleSaveAsSmartNote = async () => {
+    if (!noteSubjectId) {
+      toast.error('Please select a subject');
+      return;
+    }
+    if (!noteTitle.trim()) {
+      toast.error('Please enter a Topic / Note Title');
+      return;
+    }
+    setIsSavingNote(true);
+    try {
+      await noteService.createNote({
+        title: noteTitle,
+        content: analysisResult.text,
+        subjectId: Number(noteSubjectId)
+      });
+      setIsNoteModalOpen(false);
+      toast.success((t) => (
+        <div className="flex flex-col gap-2">
+          <span>Extracted PDF saved as Smart Note.</span>
+          <button 
+            onClick={() => { toast.dismiss(t.id); navigate('/smart-notes'); }}
+            className="px-3 py-1.5 bg-brand-500 text-white text-xs font-bold rounded-lg w-fit transition-colors hover:bg-brand-600"
+          >
+            View in Smart Notes
+          </button>
+        </div>
+      ), { duration: 6000 });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save Smart Note');
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
 
   // Restore saved extraction result on mount
   useEffect(() => {
@@ -162,14 +218,6 @@ const UploadPDF = () => {
   };
 
   const nextSteps = [
-    { 
-      title: 'Generate Summary', 
-      description: 'Use extracted text to create a short study summary.',
-      icon: FileText, 
-      color: 'text-blue-500', 
-      bg: 'bg-blue-500/10',
-      route: '/generate-summary'
-    },
     { 
       title: 'Create Flashcards', 
       description: 'Turn extracted text into revision flashcards.',
@@ -367,13 +415,25 @@ const UploadPDF = () => {
                     <FileText className="h-5 w-5 text-brand-500" />
                     Extracted Text Preview
                   </h3>
-                  <button 
-                    onClick={handleCopyText}
-                    className="inline-flex items-center gap-2 rounded-lg border border-purple-300/40 bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700 transition-colors hover:bg-purple-100 dark:border-purple-400/40 dark:bg-purple-500/10 dark:!text-purple-300 dark:hover:bg-purple-500/20"
-                  >
-                    {copied ? <Check className="h-4 w-4 text-success-500" /> : <Copy className="h-4 w-4" />}
-                    {copied ? 'Copied!' : 'Copy Text'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => {
+                        setNoteTitle(analysisResult.filename.replace('.pdf', ''));
+                        setIsNoteModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-lg border border-brand-300/40 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700 transition-colors hover:bg-brand-100 dark:border-brand-400/40 dark:bg-brand-500/10 dark:!text-brand-300 dark:hover:bg-brand-500/20"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Save as Smart Note
+                    </button>
+                    <button 
+                      onClick={handleCopyText}
+                      className="inline-flex items-center gap-2 rounded-lg border border-purple-300/40 bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700 transition-colors hover:bg-purple-100 dark:border-purple-400/40 dark:bg-purple-500/10 dark:!text-purple-300 dark:hover:bg-purple-500/20"
+                    >
+                      {copied ? <Check className="h-4 w-4 text-success-500" /> : <Copy className="h-4 w-4" />}
+                      {copied ? 'Copied!' : 'Copy Text'}
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="p-4">
@@ -416,6 +476,73 @@ const UploadPDF = () => {
           </div>
         )}
       </div>
+
+      {/* Smart Note Modal */}
+      {isNoteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-brand-500" /> Save as Smart Note
+              </h3>
+              <button onClick={() => setIsNoteModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-5 space-y-4 overflow-y-auto max-h-[60vh]">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Subject</label>
+                <select 
+                  value={noteSubjectId} 
+                  onChange={(e) => setNoteSubjectId(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+                >
+                  <option value="">Select a subject...</option>
+                  {subjects.map(s => (
+                    <option key={s.id} value={s.id}>{s.name || s.subjectName}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Topic / Note Title</label>
+                <input 
+                  type="text" 
+                  value={noteTitle} 
+                  onChange={(e) => setNoteTitle(e.target.value)}
+                  placeholder="e.g. Operating Systems Lecture 1"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Content Preview</label>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-600 dark:text-slate-400 font-mono h-32 overflow-y-auto whitespace-pre-wrap">
+                  {analysisResult?.text}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 bg-slate-50 dark:bg-slate-800/20">
+              <button 
+                onClick={() => setIsNoteModalOpen(false)}
+                disabled={isSavingNote}
+                className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveAsSmartNote}
+                disabled={isSavingNote}
+                className="px-5 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-semibold flex items-center gap-2 transition-colors disabled:opacity-60"
+              >
+                {isSavingNote ? 'Saving...' : 'Save Smart Note'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

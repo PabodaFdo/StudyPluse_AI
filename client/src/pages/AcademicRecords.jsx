@@ -58,8 +58,44 @@ const AcademicRecords = () => {
     'C-': 1.7,
     'D+': 1.3,
     D: 1.0,
+    E: 0.0,
     F: 0.0,
   };
+
+  const calculateGPA = (recordsList) => {
+    let totalCredits = 0;
+    let totalQualityPoints = 0;
+
+    recordsList.forEach((record) => {
+      const credits = Number(record.credits) || 0;
+      const grade = record.grade || record.letterGrade;
+      const point = gradeValues[grade];
+
+      if (credits > 0 && point !== undefined) {
+        totalCredits += credits;
+        totalQualityPoints += credits * point;
+      }
+    });
+
+    const gpa = totalCredits > 0 ? totalQualityPoints / totalCredits : 0;
+
+    return {
+      gpa: Number(gpa.toFixed(2)),
+      totalCredits,
+      totalQualityPoints: Number(totalQualityPoints.toFixed(2)),
+      completedCourses: recordsList.length
+    };
+  };
+
+  const getGpaStatus = (gpa) => {
+    if (gpa >= 3.7) return "Excellent";
+    if (gpa >= 3.3) return "Very Good";
+    if (gpa >= 3.0) return "Good";
+    if (gpa >= 2.0) return "Needs Improvement";
+    return "At Risk";
+  };
+
+  const gpaStats = calculateGPA(records);
 
   useEffect(() => {
     fetchData();
@@ -87,7 +123,7 @@ const AcademicRecords = () => {
     setEditingRecord(null);
 
     setForm({
-      subjectId: subjects.length > 0 ? subjects[0].id.toString() : '',
+      subjectId: '',
       courseCode: '',
       courseName: '',
       credits: '',
@@ -109,6 +145,37 @@ const AcademicRecords = () => {
     });
 
     setOpenRecordModal(true);
+  };
+
+  const handleSubjectChange = (e) => {
+    const selectedId = e.target.value;
+
+    if (!selectedId) {
+      setForm((prev) => ({
+        ...prev,
+        subjectId: "",
+        courseCode: "",
+        courseName: "",
+        credits: "",
+      }));
+      return;
+    }
+
+    const selectedSubject = subjects.find(
+      (subject) => String(subject.id) === String(selectedId)
+    );
+
+    if (selectedSubject) {
+      setForm((prev) => ({
+        ...prev,
+        subjectId: selectedId,
+        courseCode: selectedSubject.code || selectedSubject.subjectCode || "",
+        courseName: selectedSubject.name || selectedSubject.title || selectedSubject.subjectName || "",
+        credits: selectedSubject.credits?.toString() || "0",
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, subjectId: selectedId }));
+    }
   };
 
   const handleSaveRecord = async (e) => {
@@ -231,6 +298,37 @@ const AcademicRecords = () => {
         subtitle="Track completed terms, letter grades, and project target GPAs."
         icon={GraduationCap}
       />
+
+      {/* GPA Summary Section */}
+      {records.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 flex flex-col justify-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Current GPA</span>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-black">{gpaStats.gpa.toFixed(2)}</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300">
+                {getGpaStatus(gpaStats.gpa)}
+              </span>
+            </div>
+          </div>
+          <div className="p-4 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 flex flex-col justify-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Total Credits</span>
+            <span className="text-2xl font-black">{gpaStats.totalCredits}</span>
+          </div>
+          <div className="p-4 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 flex flex-col justify-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Quality Points</span>
+            <span className="text-2xl font-black">{gpaStats.totalQualityPoints.toFixed(2)}</span>
+          </div>
+          <div className="p-4 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 flex flex-col justify-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Completed Courses</span>
+            <span className="text-2xl font-black">{gpaStats.completedCourses}</span>
+          </div>
+        </div>
+      ) : !isLoading ? (
+        <div className="p-6 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 text-center text-slate-500 dark:text-slate-400 text-sm">
+          No GPA calculated yet. Add academic records to calculate your GPA.
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Table of Records */}
@@ -490,7 +588,7 @@ const AcademicRecords = () => {
 
                 <select
                   value={form.subjectId}
-                  onChange={(e) => setForm({ ...form, subjectId: e.target.value })}
+                  onChange={handleSubjectChange}
                   required
                   className="w-full rounded-2xl border border-lavender/40 bg-white/90 px-5 py-4 text-[#241b4b] outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                 >
@@ -578,11 +676,12 @@ const AcademicRecords = () => {
                   variant="secondary"
                   onClick={() => setOpenRecordModal(false)}
                   disabled={isSubmitting}
+                  className="!text-slate-700 dark:!text-slate-300"
                 >
                   Cancel
                 </Button>
 
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="!text-white">
                   {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {editingRecord ? 'Save Changes' : 'Add Record'}
                 </Button>

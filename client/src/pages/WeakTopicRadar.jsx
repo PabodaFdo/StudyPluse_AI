@@ -221,7 +221,7 @@ const WeakTopicRadar = () => {
                 <div className="flex flex-wrap gap-4 justify-center w-full">
                   {radarTopics.map((topic, i) => (
                     <div key={i} className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-xl w-44 text-center shadow-sm">
-                      <p className="font-bold text-sm text-slate-900 dark:text-white truncate" title={topic.subject}>{topic.subject}</p>
+                      <p className="font-bold text-sm text-slate-900 dark:text-slate-900 dark:text-white truncate" title={topic.subject}>{topic.subject}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Mastery: {topic.mastery}%</p>
                       <div className={`mt-3 px-2 py-1 text-xs font-semibold rounded-full inline-block ${getStatusColor(topic.status)}`}>
                         {topic.status}
@@ -256,7 +256,7 @@ const WeakTopicRadar = () => {
         {/* Action Panel / Vulnerability Alert */}
         <div className="glass-card p-5 border border-white/5 bg-white/[0.02] flex flex-col">
           <div className="space-y-4 flex-1">
-            <h3 className="font-semibold text-slate-900 dark:text-white text-base">Vulnerability Alert</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-slate-900 dark:text-white text-base">Vulnerability Alert</h3>
             
             {!result ? (
               <div className="flex flex-col items-center justify-center py-10 text-slate-500 dark:text-slate-400 space-y-3">
@@ -266,7 +266,7 @@ const WeakTopicRadar = () => {
             ) : (
               <div className="space-y-4 overflow-y-auto max-h-[300px] pr-2">
                 <div className="flex justify-between items-center">
-                  <h4 className="font-bold text-slate-900 dark:text-white truncate max-w-[150px]">{result.topicName}</h4>
+                  <h4 className="font-bold text-slate-900 dark:text-slate-900 dark:text-white truncate max-w-[150px]">{result.topicName}</h4>
                   <div className={`px-2.5 py-1 rounded-full border text-xs font-semibold ${getStatusColor(result.topicStatus)}`}>
                     {result.topicStatus} ({Math.round(result.confidence * 100)}%)
                   </div>
@@ -308,17 +308,17 @@ const WeakTopicRadar = () => {
       </div>
 
       {/* Prediction Form Section */}
-      <div className="bg-slate-900/70 border border-slate-700 p-6 rounded-2xl">
-        <h3 className="font-semibold text-lg text-white mb-6">Subject & Topic</h3>
+      <div className="bg-white/80 dark:bg-slate-900/70 border border-purple-100 dark:border-slate-700 shadow-xl shadow-purple-100/40 dark:shadow-none p-6 rounded-2xl">
+        <h3 className="font-semibold text-lg text-slate-900 dark:text-white mb-6">Subject & Topic</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <label className="block text-sm font-semibold text-slate-200 mb-1">Select Subject</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Select Subject</label>
             <select
               value={selectedSubjectId}
               onChange={handleSubjectChange}
               required
-              className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-950/60 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
             >
               <option value="">Select a subject...</option>
               {subjects.map((subject) => (
@@ -329,14 +329,14 @@ const WeakTopicRadar = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-200 mb-1">Select Topic from Smart Notes</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Select Topic from Smart Notes</label>
             {filteredNotes.length > 0 ? (
               <>
                 <select
                   value={selectedNoteId}
                   onChange={handleNoteChange}
                   disabled={!selectedSubjectId}
-                  className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 text-white placeholder-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-white dark:bg-slate-950/60 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 text-slate-900 dark:text-white placeholder-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">-- Select a saved note --</option>
                   {filteredNotes.map((note) => (
@@ -350,7 +350,7 @@ const WeakTopicRadar = () => {
                 )}
               </>
             ) : (
-              <div className="w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-slate-400 text-sm">
+              <div className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-900/60 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 text-sm">
                 {!selectedSubjectId 
                   ? "Select a subject first" 
                   : "No Smart Notes found for this subject. Create a Smart Note first."}
@@ -359,41 +359,41 @@ const WeakTopicRadar = () => {
           </div>
         </div>
 
-        <h3 className="font-semibold text-lg text-white mb-4 pt-4 border-t border-slate-700">Topic Assessment</h3>
+        <h3 className="font-semibold text-lg text-slate-900 dark:text-white mb-4 pt-4 border-t border-slate-700">Topic Assessment</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-slate-200 mb-1">Quiz Score (%)</label>
-              <input type="number" name="quizScore" value={formData.quizScore} onChange={handleChange} required min="0" max="100" step="any" className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400" />
+              <label className="block text-sm text-slate-700 dark:text-slate-200 mb-1">Quiz Score (%)</label>
+              <input type="number" name="quizScore" value={formData.quizScore} onChange={handleChange} required min="0" max="100" step="any" className="w-full px-4 py-3 bg-white dark:bg-slate-950/60 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-slate-900 dark:text-white placeholder-slate-400" />
             </div>
             <div>
-              <label className="block text-sm text-slate-200 mb-1">Wrong Answers</label>
-              <input type="number" name="wrongAnswers" value={formData.wrongAnswers} onChange={handleChange} required min="0" step="1" className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400" />
+              <label className="block text-sm text-slate-700 dark:text-slate-200 mb-1">Wrong Answers</label>
+              <input type="number" name="wrongAnswers" value={formData.wrongAnswers} onChange={handleChange} required min="0" step="1" className="w-full px-4 py-3 bg-white dark:bg-slate-950/60 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-slate-900 dark:text-white placeholder-slate-400" />
             </div>
             <div>
-              <label className="block text-sm text-slate-200 mb-1">Attempt Count</label>
-              <input type="number" name="attemptCount" value={formData.attemptCount} onChange={handleChange} required min="1" step="1" className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400" />
+              <label className="block text-sm text-slate-700 dark:text-slate-200 mb-1">Attempt Count</label>
+              <input type="number" name="attemptCount" value={formData.attemptCount} onChange={handleChange} required min="1" step="1" className="w-full px-4 py-3 bg-white dark:bg-slate-950/60 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-slate-900 dark:text-white placeholder-slate-400" />
             </div>
             <div>
-              <label className="block text-sm text-slate-200 mb-1">Time Spent (mins)</label>
-              <input type="number" name="timeSpentMinutes" value={formData.timeSpentMinutes} onChange={handleChange} required min="0" step="any" className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400" />
+              <label className="block text-sm text-slate-700 dark:text-slate-200 mb-1">Time Spent (mins)</label>
+              <input type="number" name="timeSpentMinutes" value={formData.timeSpentMinutes} onChange={handleChange} required min="0" step="any" className="w-full px-4 py-3 bg-white dark:bg-slate-950/60 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-slate-900 dark:text-white placeholder-slate-400" />
             </div>
             <div>
-              <label className="block text-sm text-slate-200 mb-1">Days Since Study</label>
-              <input type="number" name="daysSinceLastStudy" value={formData.daysSinceLastStudy} onChange={handleChange} required min="0" step="1" className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400" />
+              <label className="block text-sm text-slate-700 dark:text-slate-200 mb-1">Days Since Study</label>
+              <input type="number" name="daysSinceLastStudy" value={formData.daysSinceLastStudy} onChange={handleChange} required min="0" step="1" className="w-full px-4 py-3 bg-white dark:bg-slate-950/60 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-slate-900 dark:text-white placeholder-slate-400" />
             </div>
             <div>
-              <label className="block text-sm text-slate-200 mb-1">Confidence (1-5)</label>
-              <input type="number" name="confidenceLevel" value={formData.confidenceLevel} onChange={handleChange} required min="1" max="5" step="1" className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400" />
+              <label className="block text-sm text-slate-700 dark:text-slate-200 mb-1">Confidence (1-5)</label>
+              <input type="number" name="confidenceLevel" value={formData.confidenceLevel} onChange={handleChange} required min="1" max="5" step="1" className="w-full px-4 py-3 bg-white dark:bg-slate-950/60 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-slate-900 dark:text-white placeholder-slate-400" />
             </div>
             <div>
-              <label className="block text-sm text-slate-200 mb-1">Difficulty (1-5)</label>
-              <input type="number" name="topicDifficulty" value={formData.topicDifficulty} onChange={handleChange} required min="1" max="5" step="1" className="w-full px-4 py-3 bg-slate-950/60 border border-slate-600 rounded-xl focus:outline-none focus:border-cyan-400 text-white placeholder-slate-400" />
+              <label className="block text-sm text-slate-700 dark:text-slate-200 mb-1">Difficulty (1-5)</label>
+              <input type="number" name="topicDifficulty" value={formData.topicDifficulty} onChange={handleChange} required min="1" max="5" step="1" className="w-full px-4 py-3 bg-white dark:bg-slate-950/60 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-slate-900 dark:text-white placeholder-slate-400" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-            <button type="submit" disabled={loading} className="w-full px-6 py-4 rounded-xl bg-purple-500 hover:bg-purple-600 !text-white font-bold transition-all shadow-lg shadow-purple-500/20 disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="submit" disabled={loading} className="w-full px-6 py-4 rounded-xl bg-purple-500 hover:bg-purple-600 !text-slate-900 dark:text-white font-bold transition-all shadow-lg shadow-purple-500/20 disabled:cursor-not-allowed disabled:opacity-60">
               {loading ? 'Predicting...' : 'Predict Weakness'}
             </button>
             <button type="button" onClick={handleReset} disabled={loading} className="w-full px-6 py-4 rounded-xl border border-slate-600 bg-slate-900/60 hover:bg-slate-800 !text-cyan-300 font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60">

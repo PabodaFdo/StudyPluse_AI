@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import {
   Timer, BookOpen, Clock, Flame, LayoutDashboard,
-  AlertTriangle, Play, Flower2, RefreshCw, PlusCircle
+  AlertTriangle, Play, Flower2, RefreshCw, PlusCircle,
+  FileText, HelpCircle, Layers, File
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import StatCard from '../components/StatCard';
@@ -314,6 +315,50 @@ const Dashboard = () => {
               changeType="neutral"
               color="red"
               onClick={() => navigate('/subjects')}
+            />
+          </div>
+
+          {/* AI Library Stats */}
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 pt-2">
+            <StatCard
+              icon={FileText}
+              label="AI Summaries"
+              value={`${summary?.savedSummariesCount || 0}`}
+              badgeText="Saved"
+              changeType="neutral"
+              color="indigo"
+              onClick={() => navigate('/ai-library?tab=summaries')}
+              className="cursor-pointer hover:scale-[1.02] transition"
+            />
+            <StatCard
+              icon={HelpCircle}
+              label="AI Quizzes"
+              value={`${summary?.savedQuizzesCount || 0}`}
+              badgeText="Saved"
+              changeType="neutral"
+              color="fuchsia"
+              onClick={() => navigate('/ai-library?tab=quizzes')}
+              className="cursor-pointer hover:scale-[1.02] transition"
+            />
+            <StatCard
+              icon={Layers}
+              label="Flashcard Decks"
+              value={`${summary?.savedFlashcardsCount || 0}`}
+              badgeText="Saved"
+              changeType="neutral"
+              color="amber"
+              onClick={() => navigate('/ai-library?tab=flashcards')}
+              className="cursor-pointer hover:scale-[1.02] transition"
+            />
+            <StatCard
+              icon={File}
+              label="PDF Materials"
+              value={`${summary?.studyMaterialsCount || 0}`}
+              badgeText="Extracted"
+              changeType="neutral"
+              color="cyan"
+              onClick={() => navigate('/ai-library?tab=materials')}
+              className="cursor-pointer hover:scale-[1.02] transition"
             />
           </div>
 

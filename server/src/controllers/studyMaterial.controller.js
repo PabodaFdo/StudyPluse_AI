@@ -1,4 +1,5 @@
 const studyMaterialService = require('../services/studyMaterial.service');
+const { addGrowthPoints } = require('../services/garden.service');
 
 const createStudyMaterial = async (req, res, next) => {
   try {
@@ -16,6 +17,12 @@ const createStudyMaterial = async (req, res, next) => {
       extractedText,
       wordCount
     });
+
+    try {
+      await addGrowthPoints(userId, 5, 'Uploaded Study Material', `Saved study material: ${title}`);
+    } catch (err) {
+      console.error('Failed to add growth points for saving study material:', err);
+    }
 
     res.status(201).json({ success: true, data: material });
   } catch (error) {

@@ -168,11 +168,11 @@ const Subjects = () => {
                   <h3 className="font-bold text-white text-lg mt-1">{sub.name}</h3>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => openEdit(sub)} className="text-gray-400 hover:text-brand-400 transition-colors">
-                    <Edit2 className="h-4 w-4" />
+                  <button onClick={() => openEdit(sub)} className="p-2 rounded-lg !text-slate-600 dark:!text-slate-300 hover:!text-purple-600 dark:hover:!text-purple-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                    <Edit2 className="w-5 h-5" />
                   </button>
-                  <button onClick={() => handleDeleteClick(sub)} className="text-gray-400 hover:text-red-500 transition-colors">
-                    <Trash2 className="h-4 w-4" />
+                  <button onClick={() => handleDeleteClick(sub)} className="p-2 rounded-lg !text-slate-600 dark:!text-slate-300 hover:!text-red-600 dark:hover:!text-red-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
               </div>

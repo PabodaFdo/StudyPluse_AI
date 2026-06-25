@@ -14,13 +14,21 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
     subjectsCount,
     focusSessionsCount,
     academicRecordsCount,
-    garden
+    garden,
+    savedSummariesCount,
+    savedQuizzesCount,
+    savedFlashcardsCount,
+    studyMaterialsCount
   ] = await Promise.all([
     prisma.note.count({ where: { userId } }),
     prisma.subject.count({ where: { userId } }),
     prisma.focusSession.count({ where: { userId } }),
     prisma.academicRecord.count({ where: { userId } }),
-    prisma.studyGarden.findUnique({ where: { userId } })
+    prisma.studyGarden.findUnique({ where: { userId } }),
+    prisma.savedSummary.count({ where: { userId } }),
+    prisma.savedQuiz.count({ where: { userId } }),
+    prisma.savedFlashcardDeck.count({ where: { userId } }),
+    prisma.studyMaterial.count({ where: { userId } })
   ]);
 
   res.json({
@@ -28,7 +36,12 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
     subjectsCount: subjectsCount || 0,
     focusSessionsCount: focusSessionsCount || 0,
     academicRecordsCount: academicRecordsCount || 0,
-    gardenLevel: garden ? garden.level : 0
+    gardenLevel: garden ? garden.level : 0,
+    savedSummariesCount: savedSummariesCount || 0,
+    savedQuizzesCount: savedQuizzesCount || 0,
+    savedFlashcardsCount: savedFlashcardsCount || 0,
+    studyMaterialsCount: studyMaterialsCount || 0,
+    totalAiItemsCount: (savedSummariesCount || 0) + (savedQuizzesCount || 0) + (savedFlashcardsCount || 0) + (studyMaterialsCount || 0)
   });
 });
 

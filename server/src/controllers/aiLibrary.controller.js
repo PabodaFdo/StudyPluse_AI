@@ -1,4 +1,5 @@
 const aiLibraryService = require('../services/aiLibrary.service');
+const { addGrowthPoints } = require('../services/garden.service');
 
 // Summaries
 const saveSummary = async (req, res) => {
@@ -17,6 +18,12 @@ const saveSummary = async (req, res) => {
       content,
       wordCount,
     });
+
+    try {
+      await addGrowthPoints(userId, 5, 'Saved AI Summary', `Saved summary: ${title}`);
+    } catch (err) {
+      console.error('Failed to add growth points for saving summary:', err);
+    }
 
     return res.status(201).json({
       success: true,
@@ -93,6 +100,12 @@ const saveQuiz = async (req, res) => {
       wordCount,
     });
 
+    try {
+      await addGrowthPoints(userId, 8, 'Saved AI Quiz', `Saved quiz: ${title}`);
+    } catch (err) {
+      console.error('Failed to add growth points for saving quiz:', err);
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Saved successfully',
@@ -167,6 +180,12 @@ const saveFlashcards = async (req, res) => {
       flashcards,
       wordCount,
     });
+
+    try {
+      await addGrowthPoints(userId, 8, 'Saved AI Flashcards', `Saved flashcards: ${title}`);
+    } catch (err) {
+      console.error('Failed to add growth points for saving flashcards:', err);
+    }
 
     return res.status(201).json({
       success: true,

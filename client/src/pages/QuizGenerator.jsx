@@ -12,6 +12,7 @@ import Modal from '../components/Modal';
 import Input from '../components/Input';
 import { generateQuiz } from '../services/quiz.service';
 import { saveQuiz } from '../services/aiLibrary.service';
+import { quizAttemptService } from '../services/quizAttempt.service';
 import { getStudyMaterials } from '../services/studyMaterial.service';
 import api from '../services/api';
 
@@ -55,6 +56,8 @@ const QuizGenerator = () => {
 
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [checkedQuestions, setCheckedQuestions] = useState({});
+  const [isAttemptSaved, setIsAttemptSaved] = useState(false);
+  const [isSavingAttempt, setIsSavingAttempt] = useState(false);
 
   useEffect(() => {
     const text = localStorage.getItem('studypulse_extracted_text');
@@ -176,6 +179,8 @@ const QuizGenerator = () => {
           console.error("Failed to parse checked questions", e);
         }
       }
+
+      setIsAttemptSaved(false);
     }
   };
 
@@ -259,6 +264,7 @@ const QuizGenerator = () => {
       localStorage.setItem('studypulse_quiz_checked_questions', JSON.stringify({}));
 
       localStorage.setItem("studypulse_quiz_source_updated_at", newIdentity);
+      setIsAttemptSaved(false);
 
       toast.success('Quiz generated successfully!');
     } catch (error) {
@@ -277,6 +283,7 @@ const QuizGenerator = () => {
     localStorage.removeItem('studypulse_quiz_selected_answers');
     localStorage.removeItem('studypulse_quiz_checked_questions');
     localStorage.removeItem('studypulse_quiz_source_updated_at');
+    setIsAttemptSaved(false);
   };
 
   const handleOpenSaveModal = () => {
@@ -323,6 +330,7 @@ const QuizGenerator = () => {
     setCheckedQuestions({});
     localStorage.setItem('studypulse_quiz_selected_answers', JSON.stringify({}));
     localStorage.setItem('studypulse_quiz_checked_questions', JSON.stringify({}));
+    setIsAttemptSaved(false);
   };
 
   const handleSelectAnswer = (idx, ans) => {
@@ -347,6 +355,73 @@ const QuizGenerator = () => {
   }, 0);
   
   const totalChecked = Object.keys(checkedQuestions).length;
+  const isAllChecked = quizResult && totalChecked === quizResult.questions.length;
+
+  const handleSaveQuizResult = async () => {
+    if (!isAllChecked) return;
+    
+    try {
+      setIsSavingAttempt(true);
+      
+      let subjectId = null;
+      let finalNoteId = null;
+      let sourceTitle = "AI Quiz";
+      let finalSourceType = source;
+
+      if (source === 'note' && selectedNoteId) {
+        const note = savedNotes.find(n => n.id.toString() === selectedNoteId.toString());
+        if (note) {
+          finalNoteId = note.id;
+          subjectId = note.subjectId || null;
+          sourceTitle = note.title;
+        }
+      } else if (source === 'pdf' && selectedMaterialId) {
+        const mat = savedMaterials.find(m => m.id.toString() === selectedMaterialId.toString());
+        if (mat) {
+          sourceTitle = mat.title;
+        }
+      } else if (source === 'pdf' && extractedText) {
+        sourceTitle = "Extracted PDF Material";
+      }
+
+      const totalQuestions = quizResult.questions.length;
+      const percentage = (score / totalQuestions) * 100;
+
+      const wrongAnswers = [];
+      quizResult.questions.forEach((q, idx) => {
+        const isCorrect = checkedQuestions[idx];
+        if (!isCorrect) {
+          wrongAnswers.push({
+            question: q.question,
+            selectedAnswer: selectedAnswers[idx],
+            correctAnswer: q.correct_answer || getCorrectAnswerLabel(q),
+            explanation: q.explanation || ""
+          });
+        }
+      });
+
+      const payload = {
+        subjectId,
+        noteId: finalNoteId ? String(finalNoteId) : null,
+        sourceType: finalSourceType,
+        sourceTitle,
+        difficulty,
+        score,
+        totalQuestions,
+        percentage,
+        wrongAnswers
+      };
+
+      await quizAttemptService.saveQuizAttempt(payload);
+      toast.success('Quiz result saved successfully.');
+      setIsAttemptSaved(true);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save quiz result.');
+    } finally {
+      setIsSavingAttempt(false);
+    }
+  };
 
   const renderSetup = () => {
     if (loadingSources) {
@@ -527,7 +602,15 @@ const QuizGenerator = () => {
                   variant="primary" 
                   className="h-7 text-xs px-3"
                 >
-                  <Save className="h-3 w-3 mr-1" /> {isSaving ? 'Saving...' : 'Save Quiz'}
+                  <Save className="h-3 w-3 mr-1" /> Save Quiz to Library
+                </Button>
+                <Button 
+                  onClick={handleSaveQuizResult} 
+                  disabled={!isAllChecked || isAttemptSaved || isSavingAttempt} 
+                  className={`h-7 text-xs px-3 font-bold ${isAttemptSaved ? 'bg-slate-200 text-slate-500 cursor-not-allowed dark:bg-slate-700 dark:text-slate-300' : 'bg-cyan-500 hover:bg-cyan-600 text-white'}`}
+                >
+                  <Trophy className="h-3 w-3 mr-1" /> 
+                  {isAttemptSaved ? 'Quiz Result Saved' : isSavingAttempt ? 'Saving...' : 'Save Quiz Result'}
                 </Button>
               </div>
             </div>

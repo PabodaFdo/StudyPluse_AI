@@ -175,11 +175,61 @@ const getSubjectAnalytics = asyncHandler(async (req, res) => {
   res.status(200).json(analytics);
 });
 
+// @desc    Get overall user analytics
+// @route   GET /api/subjects/analytics/overall
+// @access  Private
+const getOverallAnalytics = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  const records = await prisma.academicRecord.findMany({
+    where: { userId }
+  });
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const recentFocusSessions = await prisma.focusSession.findMany({
+    where: { 
+      userId,
+      createdAt: { gte: sevenDaysAgo }
+    }
+  });
+
+  let totalAttendance = 0, totalAssignment = 0, totalQuiz = 0, totalPrevExam = 0;
+  let countAttendance = 0, countAssignment = 0, countQuiz = 0, countPrevExam = 0;
+  let totalMissedDeadlines = 0;
+
+  records.forEach(r => {
+    if (r.attendancePercentage != null) { totalAttendance += r.attendancePercentage; countAttendance++; }
+    if (r.assignmentAverage != null) { totalAssignment += r.assignmentAverage; countAssignment++; }
+    if (r.quizAverage != null) { totalQuiz += r.quizAverage; countQuiz++; }
+    if (r.previousExamMark != null) { totalPrevExam += r.previousExamMark; countPrevExam++; }
+    if (r.missedDeadlines != null) { totalMissedDeadlines += r.missedDeadlines; }
+  });
+
+  const focusSessionsCompleted = recentFocusSessions.length;
+  const totalFocusMinutes = recentFocusSessions.reduce((acc, curr) => acc + curr.duration, 0);
+  const studyHoursPerWeek = totalFocusMinutes > 0 ? Number((totalFocusMinutes / 60).toFixed(1)) : 0;
+
+  const analytics = {
+    attendancePercentage: countAttendance > 0 ? Number((totalAttendance / countAttendance).toFixed(1)) : 0,
+    assignmentAverage: countAssignment > 0 ? Number((totalAssignment / countAssignment).toFixed(1)) : 0,
+    quizAverage: countQuiz > 0 ? Number((totalQuiz / countQuiz).toFixed(1)) : 0,
+    studyHoursPerWeek: studyHoursPerWeek,
+    focusSessionsCompleted: focusSessionsCompleted,
+    missedDeadlines: totalMissedDeadlines,
+    previousExamMark: countPrevExam > 0 ? Number((totalPrevExam / countPrevExam).toFixed(1)) : 0,
+  };
+
+  res.status(200).json(analytics);
+});
+
 module.exports = {
   getSubjects,
   createSubject,
   getSubject,
   updateSubject,
   deleteSubject,
-  getSubjectAnalytics
+  getSubjectAnalytics,
+  getOverallAnalytics
 };

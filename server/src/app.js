@@ -18,6 +18,7 @@ const quizRoutes = require('./routes/quiz.routes');
 const flashcardRoutes = require('./routes/flashcard.routes');
 const aiLibraryRoutes = require('./routes/aiLibrary.routes');
 const studyMaterialRoutes = require('./routes/studyMaterial.routes');
+const quizAttemptRoutes = require('./routes/quizAttempt.routes');
 const { errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
@@ -49,6 +50,7 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/flashcards', flashcardRoutes);
 app.use('/api/ai-library', aiLibraryRoutes);
 app.use('/api/study-materials', studyMaterialRoutes);
+app.use('/api/quiz-attempts', quizAttemptRoutes);
 // Error Handler
 app.use(errorHandler);
 

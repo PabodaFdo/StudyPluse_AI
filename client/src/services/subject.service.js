@@ -10,7 +10,13 @@ const getSubjectAnalytics = async (subjectId) => {
   return response.data;
 };
 
+const getOverallAnalytics = async () => {
+  const response = await api.get(`/subjects/analytics/overall`);
+  return response.data;
+};
+
 export const subjectService = {
   getSubjects,
   getSubjectAnalytics,
+  getOverallAnalytics,
 };

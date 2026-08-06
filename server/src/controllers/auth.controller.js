@@ -100,6 +100,15 @@ const getMe = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/forgot-password
 // @access  Public
 const forgotPassword = asyncHandler(async (req, res) => {
+  if (process.env.EMAIL_DELIVERY_ENABLED !== "true") {
+    return res.status(200).json({
+      success: true,
+      deliveryDisabled: true,
+      message:
+        "Password reset email delivery is unavailable in this hosted demo. The complete password reset workflow is implemented and can be tested locally.",
+    });
+  }
+
   const { email } = req.body;
 
   const user = await prisma.user.findUnique({

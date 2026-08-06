@@ -15,6 +15,7 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [deliveryDisabled, setDeliveryDisabled] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +26,9 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
       const res = await forgotPassword(email);
+      if (res.deliveryDisabled) {
+        setDeliveryDisabled(true);
+      }
       toast.success(res.message || 'If an account exists for this email, a password reset link has been sent.');
       setIsSuccess(true);
     } catch (error) {
@@ -81,9 +85,15 @@ const ForgotPassword = () => {
                 <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-4">
                   <Mail className="h-8 w-8" />
                 </div>
-                <h3 className="text-lg font-bold text-text-main">Check your email</h3>
+                <h3 className="text-lg font-bold text-text-main">
+                  {deliveryDisabled ? 'Password reset demo' : 'Check your email'}
+                </h3>
                 <p className="text-sm text-text-muted">
-                  We've sent a password reset link to <strong>{email}</strong>
+                  {deliveryDisabled ? (
+                    'Password reset email delivery is unavailable in this hosted demo. The complete password reset workflow is implemented and can be tested locally.'
+                  ) : (
+                    <>We've sent a password reset link to <strong>{email}</strong></>
+                  )}
                 </p>
                 <Button
                   onClick={() => navigate('/login')}

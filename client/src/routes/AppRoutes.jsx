@@ -10,6 +10,8 @@ import Landing from '../pages/Landing';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import About from '../pages/About';
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
 
 // Student Dashboard Pages
 import Dashboard from '../pages/Dashboard';
@@ -45,6 +47,8 @@ const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/about" element={<About />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
       </Route>
 
       {/* Student Layout and Routes */}

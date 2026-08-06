@@ -49,8 +49,18 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const forgotPassword = async (email) => {
+    const res = await api.post('/auth/forgot-password', { email });
+    return res.data;
+  };
+
+  const resetPassword = async (resetToken, password) => {
+    const res = await api.put(`/auth/reset-password/${resetToken}`, { password });
+    return res.data;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, forgotPassword, resetPassword }}>
       {!loading && children}
     </AuthContext.Provider>
   );
